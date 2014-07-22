@@ -1,0 +1,78 @@
+
+output-file     = test.pdf
+width           = 720
+height          = 360
+energy-units    = kJ/mol
+
+#   This is a comment. Lines that begin with a # are ignored.
+#   Now begins the states input
+
+{
+    name        = start
+
+    text-colour = black
+    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>
+    energy      = 0
+    labelColour = black
+    
+    linksto     = real:red, catalysed:green
+    column      = 1
+}
+
+{
+    name        = real
+
+    text-colour = red
+    label       = <sup><b>.</b></sup>OH + H
+    energy      = 50
+    labelColour = red
+    
+    linksto     = fin:red
+    column      = 2
+}
+
+{
+    name        = catalysed 
+
+    text-colour = green
+    label       = Pt + O + 2H
+    energy      = 3
+    labelColour = black
+    
+    linksto     = fin:green, extra:Blue
+    column      = 2
+}
+
+{
+    name        = fin 
+
+    text-colour = black
+    label       = H<sub>2</sub>O
+    energy      = -30
+    labelColour = black
+    
+    column      = 3
+}
+
+{
+    name        = product 
+
+    text-colour = black
+    label       = T<sub>es</sub>T
+    energy      = -20
+    labelColour = black
+    
+    column      = 4
+}
+
+{
+    name        = extra 
+
+    text-colour = black
+    label       = E<sub>x</sub>t<sub>r</sub>A
+    energy      = 31.41592
+    labelColour = black
+    
+    column      = 5
+}
+
