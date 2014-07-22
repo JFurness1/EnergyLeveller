@@ -330,17 +330,31 @@ def ReadInput(filename):
 
     return outDiagram
 
+
+######################################################################################################
+#          Example printing function. Skip to bottom.
+######################################################################################################
+
+def MakeExampleFile():
+    output = open("example.inp", 'w')
+
+    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n            text-colour = red\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n            energy      = -30\nlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
+    output.close()
+    print "Made example file as 'example.inp'."
+
 ######################################################################################################
 #           Main driver function
 ######################################################################################################
-
 def main():
 
     print "o=======================================================o"
     print "         Beginning Energy Level Diagram"
     print "o=======================================================o"
-
-    if (len(sys.argv) != 2):
+    if (len(sys.argv) == 1):
+        print "\nI need an input file!\n\nAn example file will be made."
+        MakeExampleFile()
+        sys.exit("No Input file.")
+    if (len(sys.argv) > 2):
         print "Incorrect arguments. Correct call:\npython EnergyLeveler.py <INPUT FILE>"
         sys.exit("Incorrect Arguments.")
 
