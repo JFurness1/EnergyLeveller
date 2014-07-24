@@ -166,7 +166,7 @@ class Diagram:
         self.cr.set_dash([1.0,10.0])
         self.cr.set_line_width(1)
         self.cr.move_to(self.LOffset,self.axesOriginNormalised*drawHeight + self.vOffset)
-        self.cr.line_to(self.width-self.LOffset,self.axesOriginNormalised*drawHeight + self.vOffset)
+        self.cr.line_to(self.width-5,self.axesOriginNormalised*drawHeight + self.vOffset)
         self.cr.stroke()
 
         zeroText = self.pgcr.create_layout()
@@ -240,11 +240,12 @@ def ReadInput(filename):
             if (stateBlock):
                 if (line.strip()[0] == "{"):
                     print "Unexpected opening '{' within state block on line " + str(lc) + ".\nPossible forgotten closing '}'."
+                    sys.exit("ERROR: Unexpected { on line " + str(lc))
                 if (line.strip()[0] == "}"):
                     stateBlock = False
                 else:
                     raw = line.split('=')
-                    if (len(raw) > 2):
+                    if (len(raw) != 2):
                         print "Ignoring unrecognised line " + str(lc) + ":\n\t"+line
                     else:
                         raw[0] = raw[0].upper().strip()
@@ -277,11 +278,11 @@ def ReadInput(filename):
                 stateBlock = True   # we have entered a state block
 
             elif (line.strip()[0] == "}"):
-                print "ERROR: Not expecting closing } on line: " + str(lc)
+                print "WARNING: Not expecting closing } on line: " + str(lc)
 
             else:
                 raw = line.split('=')
-                if (len(raw) > 2):
+                if (len(raw) != 2):
                     print "Ignoring unrecognised line " + str(lc) + ":\n\t"+line
                 else:
                     raw[0] = raw[0].upper().strip()
@@ -307,7 +308,8 @@ def ReadInput(filename):
                         energyUnits = raw[1]
                     else:
                         print "WARNING: Skipping unknown line " + str(lc) + ":\n\t" + line
-
+    if (stateBlock):
+        print "WARNING: Final closing '}' is missing."
     if (width == 0):
         print "ERROR: Image height not set! e.g.:\nheight = 500"
         system.exit("Height not set")
@@ -326,7 +328,7 @@ def ReadInput(filename):
         outDiagram.AddState(state)
         if (state.column > maxColumn):
             maxColumn = state.column
-    outDiagram.columns = maxColumn + 1
+    outDiagram.columns = maxColumn
 
     return outDiagram
 
@@ -338,7 +340,7 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n            text-colour = red\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n            energy      = -30\nlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
+    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#\tAvailable colours are 'red', 'blue, 'green' 'black' and 'white'.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n            text-colour = red\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
     output.close()
     print "Made example file as 'example.inp'."
 
@@ -366,7 +368,7 @@ def main():
     diagram.Draw()
 
     print "o=======================================================o"
-    print " )            Image "+diagram.outputName+" made!"
+    print "         Image "+diagram.outputName+" made!"
     print "o=======================================================o"
 
 if __name__ == "__main__":
