@@ -231,7 +231,7 @@ def ReadInput(filename):
     height = 0
     outputName = ""
     energyUnits = ""
-
+    colorsToAdd = {}
     lc = 0
     for line in inp:
         lc += 1
@@ -306,6 +306,22 @@ def ReadInput(filename):
                             outName = raw[1]
                     elif (raw[0] == "ENERGY-UNITS" or raw[0] == "ENERGYUNITS" or raw[0] == "ENERGY UNITS"):
                         energyUnits = raw[1]
+                    elif(raw[0] == "NEW COLOUR" or raw[0] == "NEW COLOR"):
+                        parts = raw[1].split(',')
+                        if (len(parts) != 4):
+                            print "WARNING: Could not read colour. Please use comma sepparated NAME,R,G,B format. Line:" + str(lc)+ ":\n\t"+line
+                        else:
+                            parts[0] = parts[0].upper()
+                            if (parts[0] not in colorsToAdd):
+                                try:
+                                    R = float(parts[1])
+                                    G = float(parts[2])
+                                    B = float(parts[3])
+                                    colorsToAdd[parts[0]] = [R, G, B]
+                                except ValueError:
+                                    print "WARNING: Could not understand colour on line: "+ str(lc)+ ":\n\t"+line
+                            else:
+                                print "WARNING: Colour: " + parts[0] + " already defined at line: " + str(lc)+ ":\n\t"+line
                     else:
                         print "WARNING: Skipping unknown line " + str(lc) + ":\n\t" + line
     if (stateBlock):
@@ -322,7 +338,8 @@ def ReadInput(filename):
 
     outDiagram = Diagram(width, height, outName)
     outDiagram.energyUnits = energyUnits
-
+    for color in colorsToAdd:
+        outDiagram.COLORS[color] = colorsToAdd[color]
     maxColumn = 0
     for state in statesList:
         outDiagram.AddState(state)
@@ -340,7 +357,7 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#\tAvailable colours are 'red', 'blue, 'green' 'black' and 'white'.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n            text-colour = red\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
+    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n        new colour = purple, 0.5, 0.0, 0.5\n\n#   This is a comment. Lines that begin with a # are ignored.\n#\tAvailable colours are 'red', 'blue, 'green' 'black' and 'white'.\n#   New colours are defined in a NAME, Red, Green, Blue format.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n    text-colour = purple\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
     output.close()
     print "Made example file as 'example.inp'."
 
