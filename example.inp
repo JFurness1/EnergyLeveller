@@ -3,11 +3,11 @@ output-file     = test.pdf
 width           = 720
 height          = 360
 energy-units    = kJ/mol
-        new colour = purple, 0.5, 0.0, 0.5
+new colour      = gold, 0.65, 0.46, 0.11
 
 #   This is a comment. Lines that begin with a # are ignored.
-#	Available colours are 'red', 'blue, 'green' 'black' and 'white'.
-#   New colours are defined in a NAME, Red, Green, Blue format.
+#	Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.
+#   New colours can be defined in a NAME, Red, Green, Blue format.
 #   Now begins the states input
 
 {
@@ -25,7 +25,7 @@ energy-units    = kJ/mol
 {
     name        = real
 
-    text-colour = purple
+    text-colour = red 
     label       = <sup><b>.</b></sup>OH + H
     energy      = 50
     labelColour = red

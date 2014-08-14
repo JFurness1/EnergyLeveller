@@ -8,7 +8,7 @@ import pangocairo
 class Diagram:
     statesList  = {}
     dashes      = [6.0,3.0] # ink, skip
-    COLORS = {'RED': [1.0,0,0], 'GREEN':[0,1.0,0], 'BLUE':[0,0,1.0], 'BLACK':[0,0,0], 'WHITE':[1,1,1]}
+    COLORS = {'RED': [0.89,0.1,0.11], 'GREEN':[0.3,0.69,0.29], 'BLUE':[0.22,0.49,0.72], 'PURPLE':[0.6,0.31,0.64], 'ORANGE':[1.0,0.5,0], 'YELLOW':[1,1,0.2], 'BROWN':[0.65, 0.34, 0.16], 'PINK':[0.97, 0.51, 0.75], 'BLACK':[0,0,0], 'GRAY':[0.013,0.013,0.013]}
     outputName  = ""
     columns     = 0
     width       = 0
@@ -105,13 +105,16 @@ class Diagram:
 
 #   Draw their labels
         for state in self.statesList.itervalues():
+            labelUpperText = self.pgcr.create_layout()
+            labelUpperText.set_font_description(self.font)
+            labelUpperText.set_markup(state.label)
             self.SetTextRGB(state.labelColor)
-            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy-18)
-            self.layout.set_markup(state.label)
-            self.pgcr.update_layout(self.layout)
-            self.pgcr.show_layout(self.layout)
+            LUTpixSize = labelUpperText.get_pixel_size()
+            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy - (LUTpixSize[1] + 1))
+            self.pgcr.update_layout(labelUpperText)
+            self.pgcr.show_layout(labelUpperText)
 
-            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy+5)
+            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy+3)
             self.layout.set_markup(str(state.energy) + " " + self.energyUnits)
             self.pgcr.update_layout(self.layout)
             self.pgcr.show_layout(self.layout)
@@ -357,7 +360,7 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n        new colour = purple, 0.5, 0.0, 0.5\n\n#   This is a comment. Lines that begin with a # are ignored.\n#\tAvailable colours are 'red', 'blue, 'green' 'black' and 'white'.\n#   New colours are defined in a NAME, Red, Green, Blue format.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n    text-colour = purple\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
+    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n        new colour = purple, 0.5, 0.0, 0.5\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.\n#   New colours are defined in a NAME, Red, Green, Blue format.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n    text-colour = purple\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
     output.close()
     print "Made example file as 'example.inp'."
 
