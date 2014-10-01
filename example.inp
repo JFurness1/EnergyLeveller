@@ -1,9 +1,15 @@
-output-file     = test.pdf
+output-file     = example.pdf
 width           = 800
 height          = 800
 energy-units    = kJ/mol
 
 #   This is a comment. Lines that begin with a # are ignored.
+#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.
+#   New colours are declared with rgb 0.0-1.0 in the style:
+#   NEW COLOUR = NAME,RED,GREEN,BLUE  
+
+new colour = DarkBlue,0.27,0.51,0.71
+
 #   Now begins the states input
 
 #—————–  Path 1 ————————————————
