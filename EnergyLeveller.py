@@ -15,9 +15,8 @@ class Diagram:
     columns     = 0
     width       = 0
     height      = 0
+    tickSize    = 0
     energyUnits = ""
-    #ps          = 0
-    #cr          = 0
 
     def __init__(self, width, height, outputName):
         self.width = width
@@ -56,18 +55,6 @@ class Diagram:
         else:
             print "ERROR: States must have unique names. State " + name + " is already in use!"
             sys.exit("Non unique state names.")
-
-#    def AddState(self, name, color, label, labelColor, linkedTo, energy, column): #"test1","test2","",-100,0
-#        name = name.upper()
-#        color = color.upper()
-#        label = label.upper()
-#        labelColor = labelColor.upper()
-#        linkedTo = linkedTo.upper()
-#        if name not in self.statesList:
-#            self.statesList[name] = State(name, color, label, labelColor, linkedTo, energy, column)
-#        else:
-#            print "ERROR: States must have unique names. State " + name + " is already in use!"
-#            sys.exit("Non unique state names.")
 
     def DetermineEnergyRange(self):
         if len(self.statesList) == 0:
@@ -147,6 +134,9 @@ class Diagram:
         self.cr.set_dash({})
         self.DrawAxes()
         self.cr.show_page()
+    def EnergyToAxes(self, inEn):
+        eRange = self.DetermineEnergyRange()
+        return (inEn + eRange[0]) / eRange[1]
 
     def DrawAxes(self):
         drawHeight = (self.height-2*self.vOffset)
@@ -157,29 +147,51 @@ class Diagram:
         arrowDeg = 0.3
         arrowLength = 7
         angle = math.atan2( endY - startY, endX - startX) + math.pi
+        eRange = self.DetermineEnergyRange()
+        tickStep = pow(10, math.floor(math.log10(eRange[1]-eRange[0])))
+        tickWidth = 5
+        print tickStep
 
         self.SetSourceRGB('BLACK')
         self.cr.set_line_width(1)
         self.cr.set_line_join(cairo.LINE_JOIN_BEVEL)
+#   Draw Line
         self.cr.move_to(startX, startY)
         self.cr.line_to(endX, endY)
         self.cr.line_to(endX + arrowLength * math.cos(angle + arrowDeg), endY + arrowLength * math.sin(angle + arrowDeg))
+#   Draw Arrow
         self.cr.move_to(endX, endY)
         self.cr.line_to(endX + arrowLength * math.cos(angle - arrowDeg), endY + arrowLength * math.sin(angle - arrowDeg))
         self.cr.stroke()
+#   Draw Energy ticks
+        tEn = int(eRange[0]/tickStep) * tickStep
+        print eRange
+        while ( tEn <= eRange[1]):
+            tY = (1- (tEn - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
+            self.cr.move_to(startX, tY)
+            print tEn
+            print [startX, tY]
+            self.cr.line_to(startX + tickWidth, tY)
+            self.cr.stroke()
 
+            zeroText = self.pgcr.create_layout()
+            zeroText.set_font_description(self.font)
+            zeroText.set_markup(str(tEn))
+            self.pgcr.move_to(self.LOffset + 7, tY - zeroText.get_pixel_size()[1]/2.0)
+            self.pgcr.update_layout(zeroText)
+            self.pgcr.show_layout(zeroText)
+            if (tEn == 0):
+                zeroOfset = zeroText.get_pixel_size()[0]
+            tEn = tEn + tickStep
+
+#   Draw 0 line
         self.cr.set_dash([1.0,10.0])
         self.cr.set_line_width(1)
-        self.cr.move_to(self.LOffset,self.axesOriginNormalised*drawHeight + self.vOffset)
+        self.cr.move_to(self.LOffset + zeroOfset,self.axesOriginNormalised*drawHeight + self.vOffset)
         self.cr.line_to(self.width-5,self.axesOriginNormalised*drawHeight + self.vOffset)
         self.cr.stroke()
+#   Draw 0 text
 
-        zeroText = self.pgcr.create_layout()
-        zeroText.set_font_description(self.font)
-        zeroText.set_markup("0.0")
-        self.pgcr.move_to(self.LOffset - zeroText.get_pixel_size()[0] - 2, self.axesOriginNormalised*drawHeight + self.vOffset - zeroText.get_pixel_size()[1]/2.0)
-        self.pgcr.update_layout(zeroText)
-        self.pgcr.show_layout(zeroText)
 
     def SetSourceRGB(self,color):
         if color in self.COLORS:
@@ -333,13 +345,13 @@ def ReadInput(filename):
         print "WARNING: Final closing '}' is missing."
     if (width == 0):
         print "ERROR: Image height not set! e.g.:\nheight = 500"
-        system.exit("Height not set")
+        sys.exit("Height not set")
     if (width == 0):
         print "ERROR: Image width not set! e.g.:\nwidth = 500"
-        system.exit("Width not set")
+        sys.exit("Width not set")
     if (outName == ""):
         print "ERROR: output file name not set! e.g.:\n output-file = example.pdf"
-        system.exit("Output name not set")
+        sys.exit("Output name not set")
 
     outDiagram = Diagram(width, height, outName)
     outDiagram.energyUnits = energyUnits
