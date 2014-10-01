@@ -150,7 +150,8 @@ class Diagram:
         eRange = self.DetermineEnergyRange()
         tickStep = pow(10, math.floor(math.log10(eRange[1]-eRange[0])))
         tickWidth = 5
-        print tickStep
+        if ((eRange[1]-eRange[0]) / tickStep < 5):
+            tickStep = tickStep/2.0
 
         self.SetSourceRGB('BLACK')
         self.cr.set_line_width(1)
@@ -165,12 +166,9 @@ class Diagram:
         self.cr.stroke()
 #   Draw Energy ticks
         tEn = int(eRange[0]/tickStep) * tickStep
-        print eRange
         while ( tEn <= eRange[1]):
             tY = (1- (tEn - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
             self.cr.move_to(startX, tY)
-            print tEn
-            print [startX, tY]
             self.cr.line_to(startX + tickWidth, tY)
             self.cr.stroke()
 
@@ -183,13 +181,20 @@ class Diagram:
             if (tEn == 0):
                 zeroOfset = zeroText.get_pixel_size()[0]
             tEn = tEn + tickStep
+            if( tEn != 0):
+                self.cr.set_dash([1.0,10.0])
+                self.SetSourceRGB('GRAY')
+            else:
+                self.cr.set_dash([2.0,9.0])
+                self.SetSourceRGB('BLACK')
+            self.cr.set_line_width(1)
+            self.cr.move_to(self.LOffset + zeroOfset, tY)
+            self.cr.line_to(self.width-5,tY)
+            self.cr.stroke()
+            self.cr.set_dash([1.0,0.0])
+            self.SetSourceRGB('BLACK')
 
 #   Draw 0 line
-        self.cr.set_dash([1.0,10.0])
-        self.cr.set_line_width(1)
-        self.cr.move_to(self.LOffset + zeroOfset,self.axesOriginNormalised*drawHeight + self.vOffset)
-        self.cr.line_to(self.width-5,self.axesOriginNormalised*drawHeight + self.vOffset)
-        self.cr.stroke()
 #   Draw 0 text
 
 
