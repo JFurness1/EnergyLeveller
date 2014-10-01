@@ -1,9 +1,11 @@
 #!/opt/local/bin/python
+# coding=UTF-8
 import cairo
 import math
 import sys
 import pango
 import pangocairo
+import os.path
 
 class Diagram:
     statesList  = {}
@@ -360,7 +362,7 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("\noutput-file     = test.pdf\nwidth           = 720\nheight          = 360\nenergy-units    = kJ/mol\n        new colour = purple, 0.5, 0.0, 0.5\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.\n#   New colours are defined in a NAME, Red, Green, Blue format.\n#   Now begins the states input\n\n{\n    name        = start\n\n    text-colour = black\n    label       = 1/2 O<sub>2</sub> + H<sub>2</sub>\n    energy      = 0\n    labelColour = black\n    \n    linksto     = real:red, catalysed:green\n    column      = 1\n}\n\n{\n    name        = real\n\n    text-colour = purple\n    label       = <sup><b>.</b></sup>OH + H\n    energy      = 50\n    labelColour = red\n    \n    linksto     = fin:red\n    column      = 2\n}\n\n{\n    name        = catalysed \n\n    text-colour = green\n    label       = Pt + O + 2H\n    energy      = 3\n    labelColour = black\n    \n    linksto     = fin:green, extra:Blue\n    column      = 2\n}\n\n{\n    name        = fin \n\n    text-colour = black\n    label       = H<sub>2</sub>O\n\tenergy      = -30\n\tlabelColour = black\n    \n    column      = 3\n}\n\n{\n    name        = product \n\n    text-colour = black\n    label       = T<sub>es</sub>T\n    energy      = -20\n    labelColour = black\n    \n    column      = 4\n}\n\n{\n    name        = extra \n\n    text-colour = black\n    label       = E<sub>x</sub>t<sub>r</sub>A\n    energy      = 31.41592\n    labelColour = black\n    \n    column      = 5\n}\n\n")
+    output.write("output-file     = test.pdf\nwidth           = 800\nheight          = 800\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Now begins the states input\n\n#—————–  Path 1 ————————————————\n\n#   Add the first path, all paths are relative to the reactant energies so\n#   start at zero\n\n{\n    name        = reactants\n    text-colour = black\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X\n    energy      = 0.0\n            labelColour = black\n    linksto     = pre-react1:red, transition2:blue, pre-react3:green\n    column      = 1\n}\n\n{\n    name        = pre-react1\n    text-colour = red\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -10.5\n    labelColour = red\n    linksto     = transition1:red\n    column      = 2\n}\n\n{\n    name        = transition1\n    text-colour = red\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy            =    +20.1\n    labelColour = red\n    linksto     = post-react1:red\n    column      = 3\n}\n\n{\n    name        = post-react1\n    text-colour = red\n    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -8.2\n    labelColour = red\n    linksto     = products:red\n    column      = 4\n}\n\n#   All the paths in this practical end at the same energy… why?\n\n{\n    name        = products\n    text-colour = black\n    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X\n    energy      = -2.0\n    labelColour = black\n    column      = 5\n}\n#—————–  Path 2 ————————————————\n{\n    name        = transition2\n    text-colour = blue\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>\n    energy      = +30.1\n    labelColour = blue\n    linksto     = products:blue\n    column      = 3\n}\n\n#—————–  Path 3 ————————————————\n{\n    name        = pre-react3\n    text-colour = green\n    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -8.3\n    labelColour = green\n    linksto     = transition3:green\n    column      = 2\n}\n\n{\n    name        = transition3\n    text-colour = green\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy      = +25.4\n    labelColour = green\n    linksto     = post-react3:green\n    column      = 3\n}\n\n{\n    name        = post-react3\n    text-colour = green\n    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -6.1\n    labelColour = green\n    linksto     = products:green\n    column      = 4\n}\n")
     output.close()
     print "Made example file as 'example.inp'."
 
@@ -373,8 +375,10 @@ def main():
     print "         Beginning Energy Level Diagram"
     print "o=======================================================o"
     if (len(sys.argv) == 1):
-        print "\nI need an input file!\n\nAn example file will be made."
-        MakeExampleFile()
+        print "\nI need an input file!\n"
+        if (not os.path.exists("example.inp")):
+            print "\nAn example file will be made."
+            MakeExampleFile()
         sys.exit("No Input file.")
     if (len(sys.argv) > 2):
         print "Incorrect arguments. Correct call:\npython EnergyLeveler.py <INPUT FILE>"

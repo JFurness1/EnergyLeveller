@@ -1,4 +1,3 @@
-
 output-file     = test.pdf
 width           = 800
 height          = 800
@@ -7,25 +6,25 @@ energy-units    = kJ/mol
 #   This is a comment. Lines that begin with a # are ignored.
 #   Now begins the states input
 
-#-----------------  Path 1 ------------------------------------------------
+#—————–  Path 1 ————————————————
 
 #   Add the first path, all paths are relative to the reactant energies so
 #   start at zero
 
 {
-    name        = reactants 
+    name        = reactants
     text-colour = black
-    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X 
+    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X
     energy      = 0.0
-    labelColour = black
-    linksto     = pre-react1:red, transition2:blue, pre-react3:green 
+            labelColour = black
+    linksto     = pre-react1:red, transition2:blue, pre-react3:green
     column      = 1
 }
 
 {
     name        = pre-react1
     text-colour = red
-    label       = CH<sub>3</sub>O<sup><b>.</b></sup> ... X 
+    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X
     energy      = -10.5
     labelColour = red
     linksto     = transition1:red
@@ -33,10 +32,10 @@ energy-units    = kJ/mol
 }
 
 {
-    name        = transition1 
-    text-colour = red 
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> ... X]<sup>‡</sup>
-    energy      = +20.1
+    name        = transition1
+    text-colour = red
+    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>
+    energy            =    +20.1
     labelColour = red
     linksto     = post-react1:red
     column      = 3
@@ -45,39 +44,39 @@ energy-units    = kJ/mol
 {
     name        = post-react1
     text-colour = red
-    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH ... X 
+    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X
     energy      = -8.2
     labelColour = red
     linksto     = products:red
     column      = 4
 }
 
-#   All the paths in this practical end at the same energy... why?
+#   All the paths in this practical end at the same energy… why?
 
 {
     name        = products
     text-colour = black
-    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH + X
-    energy      = -2.0 
+    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X
+    energy      = -2.0
     labelColour = black
     column      = 5
 }
-#-----------------  Path 2 ------------------------------------------------
+#—————–  Path 2 ————————————————
 {
     name        = transition2
     text-colour = blue
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]
+    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>
     energy      = +30.1
-    labelColour = blue 
+    labelColour = blue
     linksto     = products:blue
     column      = 3
 }
 
-#-----------------  Path 3 ------------------------------------------------
+#—————–  Path 3 ————————————————
 {
     name        = pre-react3
     text-colour = green
-    label       = CH<sub>3</sub>O<sup><b>.</b></sup> ... X
+    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X
     energy      = -8.3
     labelColour = green
     linksto     = transition3:green
@@ -87,7 +86,7 @@ energy-units    = kJ/mol
 {
     name        = transition3
     text-colour = green
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> ... X]
+    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>
     energy      = +25.4
     labelColour = green
     linksto     = post-react3:green
@@ -97,11 +96,9 @@ energy-units    = kJ/mol
 {
     name        = post-react3
     text-colour = green
-    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH ... X
+    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X
     energy      = -6.1
     labelColour = green
     linksto     = products:green
     column      = 4
 }
-
-
