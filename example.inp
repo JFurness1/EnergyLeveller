@@ -1,7 +1,7 @@
 output-file     = example.pdf
 width           = 800
 height          = 800
-energy-units    = kJ/mol
+energy-units    = ∆E  kJ/mol
 
 #   This is a comment. Lines that begin with a # are ignored.
 #   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.

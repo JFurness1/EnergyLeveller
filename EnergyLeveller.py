@@ -10,7 +10,7 @@ import os.path
 class Diagram:
     statesList  = {}
     dashes      = [6.0,3.0] # ink, skip
-    COLORS = {'RED': [204.0/255.0,37.0/255.0,48.0/255.0], 'GREEN':[62.0/255.0,150.0/255.0,81.0/255.0], 'BLUE':[57.0/255.0,106.0/255.0,177.0/255.0], 'PURPLE':[107.0/255.0,76.0/255.0,154.0/255.0], 'ORANGE':[218.0/255.0,124.0/255.0,48.0/255.0], 'YELLOW':[148.0/255.0,139.0/255.0,61.0/255.0], 'BROWN':[146.0/255.0, 36.0/255.0, 40.0/255.0], 'PINK':[0.97, 0.51, 0.75], 'BLACK':[0,0,0], 'GRAY':[83.0/255.0,81.0/255.0,84.0/255.0]}
+    COLORS = {'RED': [204.0/255.0,37.0/255.0,48.0/255.0], 'GREEN':[62.0/255.0,150.0/255.0,81.0/255.0], 'BLUE':[57.0/255.0,106.0/255.0,177.0/255.0], 'PURPLE':[107.0/255.0,76.0/255.0,154.0/255.0], 'ORANGE':[218.0/255.0,124.0/255.0,48.0/255.0], 'YELLOW':[148.0/255.0,139.0/255.0,61.0/255.0], 'BROWN':[146.0/255.0, 36.0/255.0, 40.0/255.0], 'PINK':[0.97, 0.51, 0.75], 'BLACK':[0,0,0], 'GRAY':[83.0/255.0,81.0/255.0,84.0/255.0], 'LIGHTGRAY':[183.0/255.0,181.0/255.0,184.0/255.0]}
     outputName  = ""
     columns     = 0
     width       = 0
@@ -29,7 +29,7 @@ class Diagram:
         self.cr.set_font_size(12)
 
         self.pgcr = pangocairo.CairoContext(self.cr)
-        self.pgcr.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        self.pgcr.set_antialias(cairo.ANTIALIAS_GRAY)
 
         self.layout = self.pgcr.create_layout()
         self.fontname = "Times New Roman"
@@ -104,7 +104,7 @@ class Diagram:
             self.pgcr.show_layout(labelUpperText)
 
             self.pgcr.move_to(state.leftPointx + 5,state.leftPointy+3)
-            self.layout.set_markup(str(state.energy) + " " + self.energyUnits)
+            self.layout.set_markup("  " + str(state.energy) )
             self.pgcr.update_layout(self.layout)
             self.pgcr.show_layout(self.layout)
 
@@ -128,7 +128,6 @@ class Diagram:
                         self.cr.stroke()
                     else:
                         print "Name: " + dest + " is unknown."
-
 
         self.cr.stroke()
         self.cr.set_dash({})
@@ -178,22 +177,30 @@ class Diagram:
             self.pgcr.move_to(self.LOffset + 7, tY - zeroText.get_pixel_size()[1]/2.0)
             self.pgcr.update_layout(zeroText)
             self.pgcr.show_layout(zeroText)
-            if (tEn == 0):
-                zeroOfset = zeroText.get_pixel_size()[0]
-            tEn = tEn + tickStep
+
+            zeroOfset = zeroText.get_pixel_size()[0]
+
             if( tEn != 0):
                 self.cr.set_dash([1.0,10.0])
-                self.SetSourceRGB('GRAY')
+                self.SetSourceRGB('LIGHTGRAY')
             else:
                 self.cr.set_dash([2.0,9.0])
-                self.SetSourceRGB('BLACK')
+                self.SetSourceRGB('GRAY')
+            tEn = tEn + tickStep
             self.cr.set_line_width(1)
-            self.cr.move_to(self.LOffset + zeroOfset, tY)
+            self.cr.move_to(self.LOffset + zeroOfset + 10, tY)
             self.cr.line_to(self.width-5,tY)
             self.cr.stroke()
             self.cr.set_dash([1.0,0.0])
             self.SetSourceRGB('BLACK')
-
+        tY = (1- (0 - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
+        zeroText = self.pgcr.create_layout()
+        zeroText.set_font_description(pango.FontDescription(self.fontname + " 12"))
+        zeroText.set_markup(str(self.energyUnits))
+        self.pgcr.move_to(self.LOffset - zeroText.get_pixel_size()[1]/2,tY - zeroText.get_pixel_size()[0]/2.0)
+        self.pgcr.rotate(math.pi/2.0)
+        self.pgcr.update_layout(zeroText)
+        self.pgcr.show_layout(zeroText)
 #   Draw 0 line
 #   Draw 0 text
 
@@ -379,7 +386,7 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("output-file     = example.pdf\nwidth           = 800\nheight          = 800\nenergy-units    = kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.\n#   New colours are declared with rgb 0.0-1.0 in the style:\n#   NEW COLOUR = NAME,RED,GREEN,BLUE  \n\nnew colour = DarkBlue,0.27,0.51,0.71\n\n#   Now begins the states input\n\n#—————–  Path 1 ————————————————\n\n#   Add the first path, all paths are relative to the reactant energies so\n#   start at zero\n\n{\n    name        = reactants\n    text-colour = black\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X\n    energy      = 0.0\n            labelColour = black\n    linksto     = pre-react1:red, transition2:blue, pre-react3:green\n    column      = 1\n}\n\n{\n    name        = pre-react1\n    text-colour = red\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -10.5\n    labelColour = red\n    linksto     = transition1:red\n    column      = 2\n}\n\n{\n    name        = transition1\n    text-colour = red\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy            =    +20.1\n    labelColour = red\n    linksto     = post-react1:red\n    column      = 3\n}\n\n{\n    name        = post-react1\n    text-colour = red\n    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -8.2\n    labelColour = red\n    linksto     = products:red\n    column      = 4\n}\n\n#   All the paths in this practical end at the same energy… why?\n\n{\n    name        = products\n    text-colour = black\n    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X\n    energy      = -2.0\n    labelColour = black\n    column      = 5\n}\n#—————–  Path 2 ————————————————\n{\n    name        = transition2\n    text-colour = blue\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>\n    energy      = +30.1\n    labelColour = blue\n    linksto     = products:blue\n    column      = 3\n}\n\n#—————–  Path 3 ————————————————\n{\n    name        = pre-react3\n    text-colour = green\n    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -8.3\n    labelColour = green\n    linksto     = transition3:green\n    column      = 2\n}\n\n{\n    name        = transition3\n    text-colour = green\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy      = +25.4\n    labelColour = green\n    linksto     = post-react3:green\n    column      = 3\n}\n\n{\n    name        = post-react3\n    text-colour = green\n    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -6.1\n    labelColour = green\n    linksto     = products:green\n    column      = 4\n}\n")
+    output.write("output-file     = example.pdf\nwidth           = 800\nheight          = 800\nenergy-units    = ∆E  kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.\n#   New colours are declared with rgb 0.0-1.0 in the style:\n#   NEW COLOUR = NAME,RED,GREEN,BLUE  \n\nnew colour = DarkBlue,0.27,0.51,0.71\n\n#   Now begins the states input\n\n#—————–  Path 1 ————————————————\n\n#   Add the first path, all paths are relative to the reactant energies so\n#   start at zero\n\n{\n    name        = reactants\n    text-colour = black\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X\n    energy      = 0.0\n            labelColour = black\n    linksto     = pre-react1:red, transition2:blue, pre-react3:green\n    column      = 1\n}\n\n{\n    name        = pre-react1\n    text-colour = red\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -10.5\n    labelColour = red\n    linksto     = transition1:red\n    column      = 2\n}\n\n{\n    name        = transition1\n    text-colour = red\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy            =    +20.1\n    labelColour = red\n    linksto     = post-react1:red\n    column      = 3\n}\n\n{\n    name        = post-react1\n    text-colour = red\n    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -8.2\n    labelColour = red\n    linksto     = products:red\n    column      = 4\n}\n\n#   All the paths in this practical end at the same energy… why?\n\n{\n    name        = products\n    text-colour = black\n    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X\n    energy      = -2.0\n    labelColour = black\n    column      = 5\n}\n#—————–  Path 2 ————————————————\n{\n    name        = transition2\n    text-colour = blue\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>\n    energy      = +30.1\n    labelColour = blue\n    linksto     = products:blue\n    column      = 3\n}\n\n#—————–  Path 3 ————————————————\n{\n    name        = pre-react3\n    text-colour = green\n    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -8.3\n    labelColour = green\n    linksto     = transition3:green\n    column      = 2\n}\n\n{\n    name        = transition3\n    text-colour = green\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy      = +25.4\n    labelColour = green\n    linksto     = post-react3:green\n    column      = 3\n}\n\n{\n    name        = post-react3\n    text-colour = green\n    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -6.1\n    labelColour = green\n    linksto     = products:green\n    column      = 4\n}\n")
     output.close()
     print "Made example file as 'example.inp'."
 
