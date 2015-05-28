@@ -16,7 +16,7 @@ class Diagram:
     width       = 0
     height      = 0
     tickSize    = 0
-    fontSize    = 24
+    fontSize    = 8
     energyUnits = ""
 
     def __init__(self, width, height, fontSize, outputName):
@@ -263,7 +263,7 @@ def ReadInput(filename):
     statesList = []
     width = 0
     height = 0
-    fontSize = 24
+    fontSize = 8
     outputName = ""
     energyUnits = ""
     colorsToAdd = {}
@@ -362,8 +362,8 @@ def ReadInput(filename):
                             fontSize = int(raw[1])
                         except ValueError:
                             print "ERROR: Could not read integer for font size on line " + str(lc)+ ":\n\t"+line
-                            print "Default 24 will be used..."
-                            fontSize = 24
+                            print "Default 8 will be used..."
+                            fontSize = 8
                     elif(raw[0] == "NEW COLOUR" or raw[0] == "NEW COLOR"):
                         parts = raw[1].split(',')
                         if (len(parts) != 4):
