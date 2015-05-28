@@ -16,24 +16,27 @@ class Diagram:
     width       = 0
     height      = 0
     tickSize    = 0
+    fontSize    = 24
     energyUnits = ""
 
-    def __init__(self, width, height, outputName):
+    def __init__(self, width, height, fontSize, outputName):
         self.width = width
         self.height = height
+        self.fontSize = fontSize
         self.outputName = outputName
 
         self.ps = cairo.PDFSurface(self.outputName, self.width, self.height)
         self.cr = cairo.Context(self.ps)
-        self.cr.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-        self.cr.set_font_size(12)
+        self.cr.select_font_face("Times", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        self.cr.set_font_size(self.fontSize)
 
         self.pgcr = pangocairo.CairoContext(self.cr)
         self.pgcr.set_antialias(cairo.ANTIALIAS_GRAY)
 
         self.layout = self.pgcr.create_layout()
-        self.fontname = "Times New Roman"
-        self.font = pango.FontDescription(self.fontname + " 8")
+        self.fontname = "Times"
+        self.font = pango.FontDescription(self.fontname + " " + str(self.fontSize))
+        self.tickFont = pango.FontDescription(self.fontname + " " + str(self.fontSize - int(self.fontSize/4)))
         self.layout.set_font_description(self.font)
 
         self.vOffset = 30
@@ -53,7 +56,7 @@ class Diagram:
         if state.name not in self.statesList:
             self.statesList[state.name] = state
         else:
-            print "ERROR: States must have unique names. State " + name + " is already in use!"
+            print "ERROR: States must have unique names. State " + state.name + " is already in use!"
             sys.exit("Non unique state names.")
 
     def DetermineEnergyRange(self):
@@ -72,7 +75,7 @@ class Diagram:
         return [minE, maxE]
 
     def MakeLeftRightPoints(self):
-        columnWidth = self.width / (2 * self.columns)
+        columnWidth = self.width / ((2 * self.columns)-1)
         eRange = self.DetermineEnergyRange()
         drawHeight = (self.height-2*self.vOffset)
 
@@ -84,6 +87,10 @@ class Diagram:
             state.rightPointy= state.leftPointy
 
     def Draw(self):
+        self.cr.set_dash({})
+        self.DrawAxes()
+        #self.cr.set_line_join(cairo.LINE_JOIN_BEVEL)
+
 #   Draw the states themselves
         for state in self.statesList.itervalues():
             self.SetSourceRGB(state.color)
@@ -99,11 +106,12 @@ class Diagram:
             labelUpperText.set_markup(state.label)
             self.SetTextRGB(state.labelColor)
             LUTpixSize = labelUpperText.get_pixel_size()
-            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy - (LUTpixSize[1] + 1))
+            self.pgcr.move_to(state.leftPointx + 5 + state.labelOffset[0],
+                              state.leftPointy - (LUTpixSize[1] + 1) + state.labelOffset[1])
             self.pgcr.update_layout(labelUpperText)
             self.pgcr.show_layout(labelUpperText)
 
-            self.pgcr.move_to(state.leftPointx + 5,state.leftPointy+3)
+            self.pgcr.move_to(state.leftPointx + 5 + state.textOffset[0],state.leftPointy+3+state.textOffset[1])
             self.layout.set_markup("  " + str(state.energy) )
             self.pgcr.update_layout(self.layout)
             self.pgcr.show_layout(self.layout)
@@ -129,10 +137,10 @@ class Diagram:
                     else:
                         print "Name: " + dest + " is unknown."
 
+        self.DrawUnitLabel()
         self.cr.stroke()
-        self.cr.set_dash({})
-        self.DrawAxes()
         self.cr.show_page()
+
     def EnergyToAxes(self, inEn):
         eRange = self.DetermineEnergyRange()
         return (inEn + eRange[0]) / eRange[1]
@@ -166,13 +174,15 @@ class Diagram:
 #   Draw Energy ticks
         tEn = int(eRange[0]/tickStep) * tickStep
         while ( tEn <= eRange[1]):
+            if (abs(tEn) < 1E-8):
+                tEn = 0
             tY = (1- (tEn - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
             self.cr.move_to(startX, tY)
             self.cr.line_to(startX + tickWidth, tY)
             self.cr.stroke()
 
             zeroText = self.pgcr.create_layout()
-            zeroText.set_font_description(self.font)
+            zeroText.set_font_description(self.tickFont)
             zeroText.set_markup(str(tEn))
             self.pgcr.move_to(self.LOffset + 7, tY - zeroText.get_pixel_size()[1]/2.0)
             self.pgcr.update_layout(zeroText)
@@ -193,12 +203,15 @@ class Diagram:
             self.cr.stroke()
             self.cr.set_dash([1.0,0.0])
             self.SetSourceRGB('BLACK')
-        tY = (1- (0 - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
+        self.UnitY = (1- (0 - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
+
+    def DrawUnitLabel(self):
+        self.SetTextRGB('BLACK')
         zeroText = self.pgcr.create_layout()
-        zeroText.set_font_description(pango.FontDescription(self.fontname + " 12"))
+        zeroText.set_font_description(pango.FontDescription(self.fontname + " " + str(self.fontSize)))
         zeroText.set_markup(str(self.energyUnits))
-        self.pgcr.move_to(self.LOffset - zeroText.get_pixel_size()[1]/2,tY - zeroText.get_pixel_size()[0]/2.0)
-        self.pgcr.rotate(math.pi/2.0)
+        self.pgcr.move_to(self.LOffset - zeroText.get_pixel_size()[1],self.UnitY + zeroText.get_pixel_size()[0]/2.0)
+        self.pgcr.rotate(-math.pi/2.0)
         self.pgcr.update_layout(zeroText)
         self.pgcr.show_layout(zeroText)
 #   Draw 0 line
@@ -232,16 +245,8 @@ class State:
     leftPointy  = 0
     rightPointx = 0
     rightPointy = 0
-
-
-#    def __init__(self, name, color, label, labelColor, linksTo, energy, column):
-#        self.name = name
-#        self.color = color
-#        self.label =label
-#        self.labelColor = labelColor
-#        self.linksTo = linksTo
-#        self.energy = float(energy)
-#        self.column = column
+    labelOffset = (0,0)
+    textOffset  = (0,0)
 
 ######################################################################################################
 #           Input reading block
@@ -258,6 +263,7 @@ def ReadInput(filename):
     statesList = []
     width = 0
     height = 0
+    fontSize = 24
     outputName = ""
     energyUnits = ""
     colorsToAdd = {}
@@ -299,6 +305,22 @@ def ReadInput(filename):
                                 statesList[-1].energy = float(raw[-1])
                             except ValueError:
                                 print "ERROR: Could not read real number for energy on line " + str(lc)+ ":\n\t"+line
+                        elif (raw[0] == "LABELOFFSET" or raw[0] == "LABEL OFFSET" or raw[0] == "LABEL-OFFSET"):
+                            raw[1] = raw[1].split(',')
+                            try:
+                                tx = float(raw[1][0])
+                                ty = float(raw[1][1])
+                                statesList[-1].labelOffset = (tx, ty)
+                            except:
+                                print "ERROR: Could not read real number for label offset on line " + str(lc)+ ":\n\t"+line
+                        elif (raw[0] == "TEXTOFFSET" or raw[0] == "TEXT OFFSET" or raw[0] == "TEXT-OFFSET"):
+                            raw[1] = raw[1].split(',')
+                            try:
+                                tx = float(raw[1][0])
+                                ty = float(raw[1][1])
+                                statesList[-1].textOffset = (tx, ty)
+                            except:
+                                print "ERROR: Could not read real number for text offset on line " + str(lc)+ ":\n\t"+line
                         else:
                             print "Ignoring unrecognised line " + str(lc) + ":\n\t"+line
 
@@ -335,6 +357,13 @@ def ReadInput(filename):
                             outName = raw[1]
                     elif (raw[0] == "ENERGY-UNITS" or raw[0] == "ENERGYUNITS" or raw[0] == "ENERGY UNITS"):
                         energyUnits = raw[1]
+                    elif (raw[0] == "FONT-SIZE" or raw[0] == "FONTSIZE" or raw[0] == "FONT SIZE"):
+                        try:
+                            fontSize = int(raw[1])
+                        except ValueError:
+                            print "ERROR: Could not read integer for font size on line " + str(lc)+ ":\n\t"+line
+                            print "Default 24 will be used..."
+                            fontSize = 24
                     elif(raw[0] == "NEW COLOUR" or raw[0] == "NEW COLOR"):
                         parts = raw[1].split(',')
                         if (len(parts) != 4):
@@ -365,7 +394,7 @@ def ReadInput(filename):
         print "ERROR: output file name not set! e.g.:\n output-file = example.pdf"
         sys.exit("Output name not set")
 
-    outDiagram = Diagram(width, height, outName)
+    outDiagram = Diagram(width, height, fontSize, outName)
     outDiagram.energyUnits = energyUnits
     for color in colorsToAdd:
         outDiagram.COLORS[color] = colorsToAdd[color]
@@ -374,7 +403,7 @@ def ReadInput(filename):
         outDiagram.AddState(state)
         if (state.column > maxColumn):
             maxColumn = state.column
-    outDiagram.columns = maxColumn
+    outDiagram.columns = maxColumn + 1
 
     return outDiagram
 
