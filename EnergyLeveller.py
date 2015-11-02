@@ -280,7 +280,8 @@ def ReadInput(filename):
                     stateBlock = False
                 else:
                     raw = line.split('=')
-                    if (len(raw) != 2):
+                    if (len(raw) != 2 and raw[0].upper().strip() != "LABEL"):
+                        print raw[0].strip()
                         print "Ignoring unrecognised line " + str(lc) + ":\n\t"+line
                     else:
                         raw[0] = raw[0].upper().strip()
@@ -290,7 +291,11 @@ def ReadInput(filename):
                         elif (raw[0] == "TEXTCOLOR" or raw[0] == "TEXTCOLOUR" or raw[0] == "TEXT-COLOUR" or raw[0] == "TEXT-COLOR" or raw[0] == "TEXT COLOUR" or raw[0] == "TEXT COLOR"):
                             statesList[-1].color = raw[1].upper()
                         elif (raw[0] == "LABEL"):
-                            statesList[-1].label = raw[1]
+                            statesList[-1].label = ""
+                            for i in range(1, len(raw)):
+                                statesList[-1].label += raw[i]
+                                if i < len(raw)-1:
+                                    statesList[-1].label += " = "
                         elif (raw[0] == "LABELCOLOR" or raw[0] == "LABELCOLOUR"):
                             statesList[-1].labelColor = raw[1].upper()
                         elif (raw[0] == "LINKSTO" or raw[0] == "LINKS TO"):
