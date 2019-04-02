@@ -1,14 +1,11 @@
 output-file     = example.pdf
-width           = 800
-height          = 800
-energy-units    = ∆E  kJ/mol
+width           = 8
+height          = 8
+energy-units    = $\Delta$E  kJ/mol
+font size       = 10
 
 #   This is a comment. Lines that begin with a # are ignored.
-#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.
-#   New colours are declared with rgb 0.0-1.0 in the style:
-#   NEW COLOUR = NAME,RED,GREEN,BLUE  
-
-new colour = DarkBlue,0.27,0.51,0.71
+#   Available colours are those accepted by matplotlib 
 
 #   Now begins the states input
 
@@ -20,17 +17,17 @@ new colour = DarkBlue,0.27,0.51,0.71
 {
     name        = reactants
     text-colour = black
-    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X
+    label       = CH$_3$O$\cdot$ + X
     energy      = 0.0
-            labelColour = black
-    linksto     = pre-react1:red, transition2:blue, pre-react3:green
+    labelColour = black
+    linksto     = pre-react1:red, transition2:#003399, pre-react3:#009933
     column      = 1
 }
 
 {
     name        = pre-react1
     text-colour = red
-    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X
+    label       = CH$_3$O$\cdot$ $\ldots$ X
     energy      = -10.5
     labelColour = red
     linksto     = transition1:red
@@ -40,8 +37,8 @@ new colour = DarkBlue,0.27,0.51,0.71
 {
     name        = transition1
     text-colour = red
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>
-    energy            =    +20.1
+    label       = [CH$_3$O$\cdot$ $\ldots$ X]$^{++}$
+    energy      =    +20.1
     labelColour = red
     linksto     = post-react1:red
     column      = 3
@@ -50,11 +47,12 @@ new colour = DarkBlue,0.27,0.51,0.71
 {
     name        = post-react1
     text-colour = red
-    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X
+    label       = $\cdot$CH$_2$OH $\ldots$ X
     energy      = -8.2
     labelColour = red
     linksto     = products:red
     column      = 4
+    legend      = Catalyst 2
 }
 
 #   All the paths in this practical end at the same energy… why?
@@ -62,7 +60,7 @@ new colour = DarkBlue,0.27,0.51,0.71
 {
     name        = products
     text-colour = black
-    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X
+    label       =    $\cdot$CH$_2$OH + X
     energy      = -2.0
     labelColour = black
     column      = 5
@@ -70,41 +68,47 @@ new colour = DarkBlue,0.27,0.51,0.71
 #—————–  Path 2 ————————————————
 {
     name        = transition2
-    text-colour = blue
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>
+    text-colour = #003399
+    label       = [CH$_3$O$\cdot$]$^{++}$
     energy      = +30.1
-    labelColour = blue
-    linksto     = products:blue
+    labelColour = #003399
+    linksto     = products:#003399
     column      = 3
+    legend      = Uncatalysed
 }
 
 #—————–  Path 3 ————————————————
 {
     name        = pre-react3
-    text-colour = green
-    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X
+    text-colour = #009933
+    label       =    CH$_3$O$\cdot$ $\ldots$ X
     energy      = -8.3
-    labelColour = green
-    linksto     = transition3:green
+    labelColour = #009933
+    linksto     = transition3:#009933
     column      = 2
+    legend      = Catalyst 1
+    labelOffset = 0,1
+    textOffset  = 0,1.4
 }
 
 {
     name        = transition3
-    text-colour = green
-    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>
+    text-colour = #009933
+    label       = [CH$_3$O$\cdot$ $\ldots$ X]$^{++}$
     energy      = +25.4
-    labelColour = green
-    linksto     = post-react3:green
+    labelColour = #009933
+    linksto     = post-react3:#009933
     column      = 3
 }
 
 {
     name        = post-react3
-    text-colour = green
-    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X
+    text-colour = #009933
+    label       = $\cdot$CH$_2$OH $\ldots$ X
     energy      = -6.1
-    labelColour = green
-    linksto     = products:green
+    labelColour = #009933
+    linksto     = products:#009933
     column      = 4
+    labelOffset = 0,1
+    textOffset  = 0,1.4
 }

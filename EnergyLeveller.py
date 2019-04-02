@@ -1,58 +1,45 @@
 #!/opt/local/bin/python
 # coding=UTF-8
-import cairo
-import math
+
+"""
+Energy Leveller version 2.0  (2019)
+
+This code is shared under the MIT license Copyright 2019 James Furness.
+You are free to use, modify and distribute the code, though recognition of my effort is appreciated!
+"""
+
 import sys
-import pango
-import pangocairo
 import os.path
+import matplotlib.pyplot as plt
 
 class Diagram:
+    """
+    Holds global values for the diagram and handles drawing through Draw() method.
+    """
     statesList  = {}
     dashes      = [6.0,3.0] # ink, skip
-    COLORS = {'RED': [204.0/255.0,37.0/255.0,48.0/255.0], 'GREEN':[62.0/255.0,150.0/255.0,81.0/255.0], 'BLUE':[57.0/255.0,106.0/255.0,177.0/255.0], 'PURPLE':[107.0/255.0,76.0/255.0,154.0/255.0], 'ORANGE':[218.0/255.0,124.0/255.0,48.0/255.0], 'YELLOW':[148.0/255.0,139.0/255.0,61.0/255.0], 'BROWN':[146.0/255.0, 36.0/255.0, 40.0/255.0], 'PINK':[0.97, 0.51, 0.75], 'BLACK':[0,0,0], 'GRAY':[83.0/255.0,81.0/255.0,84.0/255.0], 'LIGHTGRAY':[183.0/255.0,181.0/255.0,184.0/255.0]}
     outputName  = ""
     columns     = 0
     width       = 0
     height      = 0
-    tickSize    = 0
-    fontSize    = 8
     energyUnits = ""
+    do_legend   = False
 
     def __init__(self, width, height, fontSize, outputName):
         self.width = width
         self.height = height
-        self.fontSize = fontSize
         self.outputName = outputName
 
-        self.ps = cairo.PDFSurface(self.outputName, self.width, self.height)
-        self.cr = cairo.Context(self.ps)
-        self.cr.select_font_face("Times", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-        self.cr.set_font_size(self.fontSize)
-
-        self.pgcr = pangocairo.CairoContext(self.cr)
-        self.pgcr.set_antialias(cairo.ANTIALIAS_GRAY)
-
-        self.layout = self.pgcr.create_layout()
-        self.fontname = "Times"
-        self.font = pango.FontDescription(self.fontname + " " + str(self.fontSize))
-        self.tickFont = pango.FontDescription(self.fontname + " " + str(self.fontSize - int(self.fontSize/4)))
-        self.layout.set_font_description(self.font)
-
-        self.vOffset = 30
-        self.LOffset = 30
-        self.axesTop = 0.0
-        self.axesBot = 0.0
-        self.axesTick= 1.0
-        self.axesOriginNormalised = 0.0
-
+        self.fig = plt.figure(figsize=(self.width, self.height))
+        self.ax = self.fig.add_subplot(111)
 
     def AddState(self, state):
         state.name = state.name.upper()
         state.color = state.color.upper()
-        state.label = state.label
         state.labelColor = state.labelColor.upper()
         state.linksTo = state.linksTo.upper()
+        if state.legend is not None:
+            self.do_legend = True
         if state.name not in self.statesList:
             self.statesList[state.name] = state
         else:
@@ -75,52 +62,37 @@ class Diagram:
         return [minE, maxE]
 
     def MakeLeftRightPoints(self):
-        columnWidth = self.width / ((2 * self.columns)-1)
-        eRange = self.DetermineEnergyRange()
-        drawHeight = (self.height-2*self.vOffset)
+        columnWidth = 1
 
         for key, state in self.statesList.items():
-            state.normalisedPosition = 1 - (state.energy - eRange[0]) / (eRange[1] - eRange[0])
-            state.leftPointx = (columnWidth/2) + state.column*columnWidth + (state.column)*(columnWidth/2) + self.LOffset
-            state.leftPointy = state.normalisedPosition*drawHeight + self.vOffset
+            state.leftPointx = state.column*columnWidth + state.column*columnWidth/2.0
+            state.leftPointy = state.energy
             state.rightPointx = state.leftPointx + columnWidth
-            state.rightPointy= state.leftPointy
+            state.rightPointy = state.energy
 
     def Draw(self):
-        self.cr.set_dash({})
-        self.DrawAxes()
-        #self.cr.set_line_join(cairo.LINE_JOIN_BEVEL)
+        self.ax.axhline(0.0,color='gray',linestyle=':')
 
-#   Draw the states themselves
+#   Draw the states
         for state in self.statesList.itervalues():
-            self.SetSourceRGB(state.color)
-            self.cr.set_line_width(3)
-            self.cr.move_to(state.leftPointx, state.leftPointy)
-            self.cr.line_to(state.rightPointx, state.rightPointy)
-            self.cr.stroke()
+            self.ax.plot([state.leftPointx, state.rightPointx], [state.leftPointy, state.rightPointy], c=state.color, lw=3, ls='-', label=state.legend)
 
 #   Draw their labels
+        offset = self.ax.get_ylim()
+        offset = offset[1]*0.01
         for state in self.statesList.itervalues():
-            labelUpperText = self.pgcr.create_layout()
-            labelUpperText.set_font_description(self.font)
-            labelUpperText.set_markup(state.label)
-            self.SetTextRGB(state.labelColor)
-            LUTpixSize = labelUpperText.get_pixel_size()
-            self.pgcr.move_to(state.leftPointx + 5 + state.labelOffset[0],
-                              state.leftPointy - (LUTpixSize[1] + 1) + state.labelOffset[1])
-            self.pgcr.update_layout(labelUpperText)
-            self.pgcr.show_layout(labelUpperText)
-
-            self.pgcr.move_to(state.leftPointx + 5 + state.textOffset[0],state.leftPointy+3+state.textOffset[1])
-            self.layout.set_markup("  " + str(state.energy) )
-            self.pgcr.update_layout(self.layout)
-            self.pgcr.show_layout(self.layout)
+            self.ax.text(state.leftPointx + state.labelOffset[0], state.leftPointy + state.labelOffset[1] + offset, 
+                state.label, 
+                color=state.labelColor,
+                verticalalignment='bottom')
+            self.ax.text(state.leftPointx  + state.textOffset[0], state.leftPointy + state.textOffset[1] - offset, 
+                "  " + str(state.energy),
+                color=state.labelColor,
+                verticalalignment='top')
 
 #   Draw the dashed lines connecting them
         for state in self.statesList.itervalues():
             if (state.linksTo != ""):
-                self.cr.set_dash(self.dashes)
-                self.cr.set_line_width(1)
                 for link in state.linksTo.split(','):
                     link = link.strip()
                     raw = link.split(':')
@@ -130,107 +102,16 @@ class Diagram:
                     else:
                         color = 'BLACK'
                     if dest in self.statesList:
-                        self.SetSourceRGB(color)
-                        self.cr.move_to(state.rightPointx, state.rightPointy)
-                        self.cr.line_to(self.statesList[dest].leftPointx, self.statesList[dest].leftPointy)
-                        self.cr.stroke()
+                        self.ax.plot([state.rightPointx, self.statesList[dest].leftPointx], [state.rightPointy, self.statesList[dest].leftPointy],
+                            c=color, ls='--', lw=1)
                     else:
                         print "Name: " + dest + " is unknown."
 
-        self.DrawUnitLabel()
-        self.cr.stroke()
-        self.cr.show_page()
-
-    def EnergyToAxes(self, inEn):
-        eRange = self.DetermineEnergyRange()
-        return (inEn + eRange[0]) / eRange[1]
-
-    def DrawAxes(self):
-        drawHeight = (self.height-2*self.vOffset)
-        startX = self.LOffset
-        startY = self.height - self.vOffset + 10
-        endX   = self.LOffset
-        endY   = self.vOffset - 10
-        arrowDeg = 0.3
-        arrowLength = 7
-        angle = math.atan2( endY - startY, endX - startX) + math.pi
-        eRange = self.DetermineEnergyRange()
-        tickStep = pow(10, math.floor(math.log10(eRange[1]-eRange[0])))
-        tickWidth = 5
-        if ((eRange[1]-eRange[0]) / tickStep < 5):
-            tickStep = tickStep/2.0
-
-        self.SetSourceRGB('BLACK')
-        self.cr.set_line_width(1)
-        self.cr.set_line_join(cairo.LINE_JOIN_BEVEL)
-#   Draw Line
-        self.cr.move_to(startX, startY)
-        self.cr.line_to(endX, endY)
-        self.cr.line_to(endX + arrowLength * math.cos(angle + arrowDeg), endY + arrowLength * math.sin(angle + arrowDeg))
-#   Draw Arrow
-        self.cr.move_to(endX, endY)
-        self.cr.line_to(endX + arrowLength * math.cos(angle - arrowDeg), endY + arrowLength * math.sin(angle - arrowDeg))
-        self.cr.stroke()
-#   Draw Energy ticks
-        tEn = int(eRange[0]/tickStep) * tickStep
-        while ( tEn <= eRange[1]):
-            if (abs(tEn) < 1E-8):
-                tEn = 0
-            tY = (1- (tEn - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
-            self.cr.move_to(startX, tY)
-            self.cr.line_to(startX + tickWidth, tY)
-            self.cr.stroke()
-
-            zeroText = self.pgcr.create_layout()
-            zeroText.set_font_description(self.tickFont)
-            zeroText.set_markup(str(tEn))
-            self.pgcr.move_to(self.LOffset + 7, tY - zeroText.get_pixel_size()[1]/2.0)
-            self.pgcr.update_layout(zeroText)
-            self.pgcr.show_layout(zeroText)
-
-            zeroOfset = zeroText.get_pixel_size()[0]
-
-            if( tEn != 0):
-                self.cr.set_dash([1.0,10.0])
-                self.SetSourceRGB('LIGHTGRAY')
-            else:
-                self.cr.set_dash([2.0,9.0])
-                self.SetSourceRGB('GRAY')
-            tEn = tEn + tickStep
-            self.cr.set_line_width(1)
-            self.cr.move_to(self.LOffset + zeroOfset + 10, tY)
-            self.cr.line_to(self.width-5,tY)
-            self.cr.stroke()
-            self.cr.set_dash([1.0,0.0])
-            self.SetSourceRGB('BLACK')
-        self.UnitY = (1- (0 - eRange[0]) / (eRange[1] - eRange[0])) * drawHeight + self.vOffset
-
-    def DrawUnitLabel(self):
-        self.SetTextRGB('BLACK')
-        zeroText = self.pgcr.create_layout()
-        zeroText.set_font_description(pango.FontDescription(self.fontname + " " + str(self.fontSize)))
-        zeroText.set_markup(str(self.energyUnits))
-        self.pgcr.move_to(self.LOffset - zeroText.get_pixel_size()[1],self.UnitY + zeroText.get_pixel_size()[0]/2.0)
-        self.pgcr.rotate(-math.pi/2.0)
-        self.pgcr.update_layout(zeroText)
-        self.pgcr.show_layout(zeroText)
-#   Draw 0 line
-#   Draw 0 text
-
-
-    def SetSourceRGB(self,color):
-        if color in self.COLORS:
-            self.cr.set_source_rgb(self.COLORS[color][0],self.COLORS[color][1],self.COLORS[color][2])
-        else:
-            print "Colour: " + color + " not a known colour!"
-            self.cr.set_source_rgb(0,0,0)
-
-    def SetTextRGB(self,color):
-        if color in self.COLORS:
-            self.pgcr.set_source_rgb(self.COLORS[color][0],self.COLORS[color][1],self.COLORS[color][2])
-        else:
-            print "Colour: " + color + " not a known colour!"
-            self.pgcr.set_source_rgb(0,0,0)
+        self.ax.set_ylabel(str(self.energyUnits))
+        self.ax.set_xticks([]) 
+        if self.do_legend:
+            self.ax.legend()
+        self.fig.savefig(self.outputName)
 
 class State:
     name        = ""
@@ -238,6 +119,7 @@ class State:
     labelColor  = ""
     linksTo     = ""
     label       = ""
+    legend      = None
     energy      = 0.0
     normalisedPosition = 0.0
     column      = 1
@@ -297,7 +179,7 @@ def ReadInput(filename):
                                 if i < len(raw)-1:
                                     statesList[-1].label += " = "
                         elif (raw[0] == "LABELCOLOR" or raw[0] == "LABELCOLOUR"):
-                            statesList[-1].labelColor = raw[1].upper()
+                            statesList[-1].labelColor = raw[1]
                         elif (raw[0] == "LINKSTO" or raw[0] == "LINKS TO"):
                             statesList[-1].linksTo = raw[1].upper()
                         elif (raw[0] == "COLUMN"):
@@ -326,6 +208,8 @@ def ReadInput(filename):
                                 statesList[-1].textOffset = (tx, ty)
                             except:
                                 print "ERROR: Could not read real number for text offset on line " + str(lc)+ ":\n\t"+line
+                        elif raw[0] == "LEGEND":
+                            statesList[-1].legend = raw[1]
                         else:
                             print "Ignoring unrecognised line " + str(lc) + ":\n\t"+line
 
@@ -365,26 +249,10 @@ def ReadInput(filename):
                     elif (raw[0] == "FONT-SIZE" or raw[0] == "FONTSIZE" or raw[0] == "FONT SIZE"):
                         try:
                             fontSize = int(raw[1])
+                            plt.rcParams.update({'font.size': fontSize})
                         except ValueError:
                             print "ERROR: Could not read integer for font size on line " + str(lc)+ ":\n\t"+line
-                            print "Default 8 will be used..."
-                            fontSize = 8
-                    elif(raw[0] == "NEW COLOUR" or raw[0] == "NEW COLOR"):
-                        parts = raw[1].split(',')
-                        if (len(parts) != 4):
-                            print "WARNING: Could not read colour. Please use comma sepparated NAME,R,G,B format. Line:" + str(lc)+ ":\n\t"+line
-                        else:
-                            parts[0] = parts[0].upper()
-                            if (parts[0] not in colorsToAdd):
-                                try:
-                                    R = float(parts[1])
-                                    G = float(parts[2])
-                                    B = float(parts[3])
-                                    colorsToAdd[parts[0]] = [R, G, B]
-                                except ValueError:
-                                    print "WARNING: Could not understand colour on line: "+ str(lc)+ ":\n\t"+line
-                            else:
-                                print "WARNING: Colour: " + parts[0] + " already defined at line: " + str(lc)+ ":\n\t"+line
+                            print "Default will be used..."
                     else:
                         print "WARNING: Skipping unknown line " + str(lc) + ":\n\t" + line
     if (stateBlock):
@@ -420,7 +288,8 @@ def ReadInput(filename):
 def MakeExampleFile():
     output = open("example.inp", 'w')
 
-    output.write("output-file     = example.pdf\nwidth           = 800\nheight          = 800\nfont size        = 18\nenergy-units    = ∆E  kJ/mol\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are 'red', 'blue, 'green' 'purple' 'orange' 'yellow' 'brown' 'pink' 'black' and 'gray'.\n#   New colours are declared with rgb 0.0-1.0 in the style:\n#   NEW COLOUR = NAME,RED,GREEN,BLUE  \n\nnew colour = DarkBlue,0.27,0.51,0.71\n\n#    The label and energy on a state can be tweaked:\n#    labelOffset  = dx,-dy\n#    textOffset  = dx,dy\n#    This works on  a state by state basis.\n\n#   Now begins the states input\n\n#—————–  Path 1 ————————————————\n\n#   Add the first path, all paths are relative to the reactant energies so\n#   start at zero\n\n{\n    name        = reactants\n    text-colour = black\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> + X\n    energy      = 0.0\n            labelColour = black\n    linksto     = pre-react1:red, transition2:blue, pre-react3:green\n    column      = 1\n}\n\n{\n    name        = pre-react1\n    text-colour = red\n    label       = CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -10.5\n    labelColour = red\n    linksto     = transition1:red\n    column      = 2\n}\n\n{\n    name        = transition1\n    text-colour = red\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy            =    +20.1\n    labelColour = red\n    linksto     = post-react1:red\n    column      = 3\n}\n\n{\n    name        = post-react1\n    text-colour = red\n    label       = <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -8.2\n    labelColour = red\n    linksto     = products:red\n    column      = 4\n}\n\n#   All the paths in this practical end at the same energy… why?\n\n{\n    name        = products\n    text-colour = black\n    label       =    <sup><b>.</b></sup>CH<sub>2</sub>OH    +    X\n    energy      = -2.0\n    labelColour = black\n    column      = 5\n}\n#—————–  Path 2 ————————————————\n{\n    name        = transition2\n    text-colour = blue\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup>]<sup>‡</sup>\n    energy      = +30.1\n    labelColour = blue\n    linksto     = products:blue\n    column      = 3\n}\n\n#—————–  Path 3 ————————————————\n{\n    name        = pre-react3\n    text-colour = green\n    label       =    CH<sub>3</sub>O<sup><b>.</b></sup> … X\n    energy      = -8.3\n    labelColour = green\n    linksto     = transition3:green\n    column      = 2\n}\n\n{\n    name        = transition3\n    text-colour = green\n    label       = [CH<sub>3</sub>O<sup><b>.</b></sup> … X]<sup>‡</sup>\n    energy      = +25.4\n    labelColour = green\n    linksto     = post-react3:green\n    column      = 3\n}\n\n{\n    name        = post-react3\n    text-colour = green\n    label            =            <sup><b>.</b></sup>CH<sub>2</sub>OH … X\n    energy      = -6.1\n    labelColour = green\n    linksto     = products:green\n    column      = 4\n}\n")
+    output.write("output-file     = example.pdf\nwidth           = 8\nheight          = 8\nenergy-units    = $\\Delta$E  kJ/mol\nfont size       = 10\n\n#   This is a comment. Lines that begin with a # are ignored.\n#   Available colours are those accepted by matplotlib \n\n#   Now begins the states input\n\n#—————–  Path 1 ————————————————\n\n#   Add the first path, all paths are relative to the reactant energies so\n#   start at zero\n\n{\n    name        = reactants\n    text-colour = black\n    label       = CH$_3$O$\\cdot$ + X\n    energy      = 0.0\n    labelColour = black\n    linksto     = pre-react1:red, transition2:#003399, pre-react3:#009933\n    column      = 1\n}\n\n{\n    name        = pre-react1\n    text-colour = red\n    label       = CH$_3$O$\\cdot$ $\\ldots$ X\n    energy      = -10.5\n    labelColour = red\n    linksto     = transition1:red\n    column      = 2\n}\n\n{\n    name        = transition1\n    text-colour = red\n    label       = [CH$_3$O$\\cdot$ $\\ldots$ X]$^{++}$\n    energy      =    +20.1\n    labelColour = red\n    linksto     = post-react1:red\n    column      = 3\n}\n\n{\n    name        = post-react1\n    text-colour = red\n    label       = $\\cdot$CH$_2$OH $\\ldots$ X\n    energy      = -8.2\n    labelColour = red\n    linksto     = products:red\n    column      = 4\n    legend      = Catalyst 2\n}\n\n#   All the paths in this practical end at the same energy… why?\n\n{\n    name        = products\n    text-colour = black\n    label       =    $\\cdot$CH$_2$OH + X\n    energy      = -2.0\n    labelColour = black\n    column      = 5\n}\n#—————–  Path 2 ————————————————\n{\n    name        = transition2\n    text-colour = #003399\n    label       = [CH$_3$O$\\cdot$]$^{++}$\n    energy      = +30.1\n    labelColour = #003399\n    linksto     = products:#003399\n    column      = 3\n    legend      = Uncatalysed\n}\n\n#—————–  Path 3 ————————————————\n{\n    name        = pre-react3\n    text-colour = #009933\n    label       =    CH$_3$O$\\cdot$ $\\ldots$ X\n    energy      = -8.3\n    labelColour = #009933\n    linksto     = transition3:#009933\n    column      = 2\n    legend      = Catalyst 1\n    labelOffset = 0,1\n    textOffset  = 0,1.4\n}\n\n{\n    name        = transition3\n    text-colour = #009933\n    label       = [CH$_3$O$\\cdot$ $\\ldots$ X]$^{++}$\n    energy      = +25.4\n    labelColour = #009933\n    linksto     = post-react3:#009933\n    column      = 3\n}\n\n{\n    name        = post-react3\n    text-colour = #009933\n    label       = $\\cdot$CH$_2$OH $\\ldots$ X\n    energy      = -6.1\n    labelColour = #009933\n    linksto     = products:#009933\n    column      = 4\n    labelOffset = 0,1\n    textOffset  = 0,1.4\n}\n")
+
     output.close()
     print "Made example file as 'example.inp'."
 
@@ -443,10 +312,7 @@ def main():
         sys.exit("Incorrect Arguments.")
 
     diagram = ReadInput(sys.argv[1])
-
-    diagram.DetermineEnergyRange()
     diagram.MakeLeftRightPoints()
-
     diagram.Draw()
 
     print "o=======================================================o"
