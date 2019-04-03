@@ -10,6 +10,8 @@ You are free to use, modify and distribute the code, though recognition of my ef
 from __future__ import print_function
 import sys
 import os.path
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 class Diagram:
