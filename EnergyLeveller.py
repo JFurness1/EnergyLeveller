@@ -18,14 +18,7 @@ class Diagram:
     """
     Holds global values for the diagram and handles drawing through Draw() method.
     """
-    statesList  = {}
-    dashes      = [6.0,3.0] # ink, skip
-    outputName  = ""
-    columns     = 0
-    width       = 0
-    height      = 0
-    energyUnits = ""
-    do_legend   = False
+    
 
     def __init__(self, width, height, fontSize, outputName):
         self.width = width
@@ -34,6 +27,15 @@ class Diagram:
 
         self.fig = plt.figure(figsize=(self.width, self.height))
         self.ax = self.fig.add_subplot(111)
+
+        self.statesList  = {}
+        self.dashes      = [6.0,3.0] # ink, skip
+        self.columns     = 0
+        self.width       = 0
+        self.height      = 0
+        self.energyUnits = ""
+        self.do_legend   = False
+        self.COLORS      = {}
 
     def AddState(self, state):
         state.name = state.name.upper()
@@ -46,14 +48,14 @@ class Diagram:
             self.statesList[state.name] = state
         else:
             print("ERROR: States must have unique names. State " + state.name + " is already in use!")
-            sys.exit("Non unique state names.")
+            raise ValueError("Non unique state names.")
 
     def DetermineEnergyRange(self):
         if len(self.statesList) == 0:
-            sys.exit("No states in diagram.")
+            raise ValueError("No states in diagram.")
         maxE = -10E20
         minE = 10E20
-        for state in self.statesList.itervalues():
+        for state in self.statesList.keys():
             if state.energy > maxE:
                 maxE = state.energy
             if state.energy < minE:
@@ -66,7 +68,7 @@ class Diagram:
     def MakeLeftRightPoints(self):
         columnWidth = 1
 
-        for key, state in self.statesList.items():
+        for _, state in self.statesList.items():
             state.leftPointx = state.column*columnWidth + state.column*columnWidth/2.0
             state.leftPointy = state.energy
             state.rightPointx = state.leftPointx + columnWidth
@@ -94,6 +96,45 @@ class Diagram:
                 color=state.labelColor,
                 verticalalignment='top')
 
+        # Now xrange is set by other things, fit the images
+        # This requires some conversion between data coordinates and axes coordinates
+        # As we want to position and scale the image in data space, but preserve the aspect ratio
+        # in axes space...
+
+        xlim = self.ax.get_xlim()
+        x_range = xlim[1] - xlim[0]
+        ylim = self.ax.get_ylim()
+        y_range = ylim[1] - xlim[0]
+        ax_aspect = x_range/y_range  # Save the current axis aspect ratio for later restoration
+
+        for key in self.statesList.keys():
+            state = self.statesList[key]
+            if state.image is not None:
+                aspect_ratio = state.image.shape[1]/state.image.shape[0]  # Width/Height
+
+                # Determine desired image characteristics in axes coordinates
+                axes_left = (state.leftPointx - xlim[0])/x_range
+                axes_right = (state.rightPointx - xlim[0])/x_range
+                axes_width = axes_right - axes_left
+                axes_bottom = (state.leftPointy - ylim[0])/y_range
+                axes_height = axes_width/aspect_ratio
+                axes_top = axes_bottom + axes_height
+
+                # Now use them to find data coordinates
+                data_left = state.leftPointx
+                data_right = state.rightPointx*state.imageScale
+                data_bottom = state.leftPointy
+                data_top = (ylim[0] + axes_top*y_range)*state.imageScale
+
+                self.ax.imshow(state.image, 
+                    extent=(
+                        data_left + state.imageOffset[0], 
+                        data_right + state.imageOffset[0],
+                        data_bottom + state.imageOffset[1],
+                        data_top + state.imageOffset[1]), 
+                    aspect=aspect_ratio,
+                    interpolation='lanczos')
+
 #   Draw the dashed lines connecting them
         for key in self.statesList.keys():
             state = self.statesList[key]
@@ -116,24 +157,34 @@ class Diagram:
         self.ax.set_xticks([]) 
         if self.do_legend:
             self.ax.legend()
+
+        # imshow tries to change the axis aspect ratio.
+        # We don't want this, so change it back
+        self.ax.set_aspect(ax_aspect)
+        
+        self.fig.tight_layout()
         self.fig.savefig(self.outputName)
 
 class State:
-    name        = ""
-    color       = ""
-    labelColor  = ""
-    linksTo     = ""
-    label       = ""
-    legend      = None
-    energy      = 0.0
-    normalisedPosition = 0.0
-    column      = 1
-    leftPointx  = 0
-    leftPointy  = 0
-    rightPointx = 0
-    rightPointy = 0
-    labelOffset = (0,0)
-    textOffset  = (0,0)
+    def __init__(self):
+        self.name        = ""
+        self.color       = ""
+        self.labelColor  = ""
+        self.linksTo     = ""
+        self.label       = ""
+        self.legend      = None
+        self.energy      = 0.0
+        self.normalisedPosition = 0.0
+        self.column      = 1
+        self.leftPointx  = 0
+        self.leftPointy  = 0
+        self.rightPointx = 0
+        self.rightPointy = 0
+        self.labelOffset = (0,0)
+        self.textOffset  = (0,0)
+        self.imageOffset = (0,0)
+        self.imageScale = 1.0
+        self.image = None
 
 ######################################################################################################
 #           Input reading block
@@ -144,14 +195,13 @@ def ReadInput(filename):
         inp = open(filename,'r')
     except:
         print("Error opening file. File: " + filename + " may not exist.")
-        sys.exit("Could not open Input file.")
+        raise SystemExit("Could not open Input file: {:}".format(filename))
 
     stateBlock = False
     statesList = []
     width = 0
     height = 0
     fontSize = 8
-    outputName = ""
     energyUnits = ""
     colorsToAdd = {}
     lc = 0
@@ -162,7 +212,7 @@ def ReadInput(filename):
             if (stateBlock):
                 if (line.strip()[0] == "{"):
                     print("Unexpected opening '{' within state block on line " + str(lc) + ".\nPossible forgotten closing '}'.")
-                    sys.exit("ERROR: Unexpected { on line " + str(lc))
+                    raise ValueError("ERROR: Unexpected { on line " + str(lc))
                 if (line.strip()[0] == "}"):
                     stateBlock = False
                 else:
@@ -203,7 +253,7 @@ def ReadInput(filename):
                                 tx = float(raw[1][0])
                                 ty = float(raw[1][1])
                                 statesList[-1].labelOffset = (tx, ty)
-                            except:
+                            except ValueError:
                                 print("ERROR: Could not read real number for label offset on line " + str(lc)+ ":\n\t"+line)
                         elif (raw[0] == "TEXTOFFSET" or raw[0] == "TEXT OFFSET" or raw[0] == "TEXT-OFFSET"):
                             raw[1] = raw[1].split(',')
@@ -211,13 +261,31 @@ def ReadInput(filename):
                                 tx = float(raw[1][0])
                                 ty = float(raw[1][1])
                                 statesList[-1].textOffset = (tx, ty)
-                            except:
+                            except ValueError:
                                 print("ERROR: Could not read real number for text offset on line " + str(lc)+ ":\n\t"+line)
                         elif raw[0] == "LEGEND":
                             statesList[-1].legend = raw[1]
+                        elif raw[0] == "IMAGE":
+                            try:
+                                statesList[-1].image = plt.imread(raw[-1])
+                            except IOError:
+                                raise IOError("Failed to find image on line {:}".format(lc))
+                        elif "IMAGE" in raw[0] and "OFFSET" in raw[0]:
+                            raw[1] = raw[1].split(',')
+                            try:
+                                tx = float(raw[1][0])
+                                ty = float(raw[1][1])
+                                statesList[-1].imageOffset = (tx, ty)
+                            except ValueError:
+                                print("ERROR: Could not read real number for image offset on line " + str(lc)+ ":\n\t"+line)
+                        elif "IMAGE" in raw[0] and "SCALE" in raw[0]:
+                            try:
+                                scale = float(raw[1])
+                                statesList[-1].imageScale = scale
+                            except ValueError:
+                                print("ERROR: Could not read real number for image scale on line " + str(lc)+ ":\n\t"+line)
                         else:
                             print("Ignoring unrecognised line " + str(lc) + ":\n\t"+line)
-
             elif (line.strip()[0] == "{"):
                 statesList.append(State())
                 stateBlock = True   # we have entered a state block
@@ -264,13 +332,13 @@ def ReadInput(filename):
         print("WARNING: Final closing '}' is missing.")
     if (width == 0):
         print("ERROR: Image height not set! e.g.:\nheight = 500")
-        sys.exit("Height not set")
+        raise ValueError("Height not set")
     if (width == 0):
         print("ERROR: Image width not set! e.g.:\nwidth = 500")
-        sys.exit("Width not set")
+        raise ValueError("Width not set")
     if (outName == ""):
         print("ERROR: output file name not set! e.g.:\n output-file = example.pdf")
-        sys.exit("Output name not set")
+        raise ValueError("Output name not set")
 
     outDiagram = Diagram(width, height, fontSize, outName)
     outDiagram.energyUnits = energyUnits
@@ -311,10 +379,10 @@ def main():
         if (not os.path.exists("example.inp")):
             print("\nAn example file will be made.")
             MakeExampleFile()
-        sys.exit("No Input file.")
+        raise IOError("No Input file provided.")
     if (len(sys.argv) > 2):
         print("Incorrect arguments. Correct call:\npython EnergyLeveler.py <INPUT FILE>")
-        sys.exit("Incorrect Arguments.")
+        raise ValueError("Incorrect Arguments.")
 
     diagram = ReadInput(sys.argv[1])
     diagram.MakeLeftRightPoints()
