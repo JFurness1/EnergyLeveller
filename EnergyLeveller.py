@@ -18,7 +18,7 @@ class Diagram:
     """
     Holds global values for the diagram and handles drawing through Draw() method.
     """
-    
+
 
     def __init__(self, width, height, fontSize, outputName):
         self.width = width
@@ -87,11 +87,11 @@ class Diagram:
         offset = offset[1]*0.01
         for key in self.statesList.keys():
             state = self.statesList[key]
-            self.ax.text(state.leftPointx + state.labelOffset[0], state.leftPointy + state.labelOffset[1] + offset, 
-                state.label, 
+            self.ax.text(state.leftPointx + state.labelOffset[0], state.leftPointy + state.labelOffset[1] + offset,
+                state.label,
                 color=state.labelColor,
                 verticalalignment='bottom')
-            self.ax.text(state.leftPointx  + state.textOffset[0], state.leftPointy + state.textOffset[1] - offset, 
+            self.ax.text(state.leftPointx  + state.textOffset[0], state.leftPointy + state.textOffset[1] - offset,
                 "  " + str(state.energy),
                 color=state.labelColor,
                 verticalalignment='top')
@@ -126,12 +126,12 @@ class Diagram:
                 data_bottom = state.leftPointy
                 data_top = (ylim[0] + axes_top*y_range)*state.imageScale
 
-                self.ax.imshow(state.image, 
+                self.ax.imshow(state.image,
                     extent=(
-                        data_left + state.imageOffset[0], 
+                        data_left + state.imageOffset[0],
                         data_right + state.imageOffset[0],
                         data_bottom + state.imageOffset[1],
-                        data_top + state.imageOffset[1]), 
+                        data_top + state.imageOffset[1]),
                     aspect=aspect_ratio,
                     interpolation='lanczos')
 
@@ -154,14 +154,14 @@ class Diagram:
                         print("Name: " + dest + " is unknown.")
 
         self.ax.set_ylabel(str(self.energyUnits))
-        self.ax.set_xticks([]) 
+        self.ax.set_xticks([])
         if self.do_legend:
             self.ax.legend()
 
         # imshow tries to change the axis aspect ratio.
         # We don't want this, so change it back
         self.ax.set_aspect(ax_aspect)
-        
+
         self.fig.tight_layout()
         self.fig.savefig(self.outputName)
 
@@ -281,7 +281,9 @@ def ReadInput(filename):
                         elif "IMAGE" in raw[0] and "SCALE" in raw[0]:
                             try:
                                 scale = float(raw[1])
-                                statesList[-1].imageScale = scale
+                                if scale < 0.1:
+                                    print("image scale cannot be < 0.1, setting to 0.1/")
+                                statesList[-1].imageScale = max(scale, 0.1)
                             except ValueError:
                                 print("ERROR: Could not read real number for image scale on line " + str(lc)+ ":\n\t"+line)
                         else:
