@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python
 # coding=UTF-8
 
 """
@@ -31,8 +31,6 @@ class Diagram:
         self.statesList  = {}
         self.dashes      = [6.0,3.0] # ink, skip
         self.columns     = 0
-        self.width       = 0
-        self.height      = 0
         self.energyUnits = ""
         self.do_legend   = False
         self.COLORS      = {}
@@ -105,7 +103,7 @@ class Diagram:
         x_range = xlim[1] - xlim[0]
         ylim = self.ax.get_ylim()
         y_range = ylim[1] - xlim[0]
-        ax_aspect = x_range/y_range  # Save the current axis aspect ratio for later restoration
+        ax_aspect = self.width/self.height  # Save the Figure ratio
 
         for key in self.statesList.keys():
             state = self.statesList[key]
@@ -117,7 +115,7 @@ class Diagram:
                 axes_right = (state.rightPointx - xlim[0])/x_range
                 axes_width = axes_right - axes_left
                 axes_bottom = (state.leftPointy - ylim[0])/y_range
-                axes_height = axes_width/aspect_ratio
+                axes_height = axes_width/aspect_ratio*ax_aspect
                 axes_top = axes_bottom + axes_height
 
                 # Now use them to find data coordinates
@@ -127,13 +125,13 @@ class Diagram:
                 data_top = (ylim[0] + axes_top*y_range)*state.imageScale
 
                 self.ax.imshow(state.image,
-                    extent=(
-                        data_left + state.imageOffset[0],
-                        data_right + state.imageOffset[0],
-                        data_bottom + state.imageOffset[1],
-                        data_top + state.imageOffset[1]),
-                    aspect=aspect_ratio,
-                    interpolation='lanczos')
+                               extent=(
+                               data_left + state.imageOffset[0],
+                               data_right + state.imageOffset[0],
+                               data_bottom + state.imageOffset[1],
+                               data_top + state.imageOffset[1]),
+                               aspect='auto',
+                               interpolation='lanczos')
 
 #   Draw the dashed lines connecting them
         for key in self.statesList.keys():
@@ -157,10 +155,6 @@ class Diagram:
         self.ax.set_xticks([])
         if self.do_legend:
             self.ax.legend()
-
-        # imshow tries to change the axis aspect ratio.
-        # We don't want this, so change it back
-        self.ax.set_aspect(ax_aspect)
 
         self.fig.tight_layout()
         self.fig.savefig(self.outputName)
