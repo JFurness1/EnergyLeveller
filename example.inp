@@ -1,5 +1,5 @@
 output-file     = example.pdf
-width           = 8
+width           = 10
 height          = 8
 energy-units    = $\Delta$E  kJ/mol
 font size       = 10
