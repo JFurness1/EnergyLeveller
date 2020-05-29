@@ -31,8 +31,6 @@ class Diagram:
         self.statesList  = {}
         self.dashes      = [6.0,3.0] # ink, skip
         self.columns     = 0
-        self.width       = 0
-        self.height      = 0
         self.energyUnits = ""
         self.do_legend   = False
         self.COLORS      = {}
@@ -332,7 +330,7 @@ def ReadInput(filename):
                         print("WARNING: Skipping unknown line " + str(lc) + ":\n\t" + line)
     if (stateBlock):
         print("WARNING: Final closing '}' is missing.")
-    if (width == 0):
+    if (height == 0):
         print("ERROR: Image height not set! e.g.:\nheight = 500")
         raise ValueError("Height not set")
     if (width == 0):
