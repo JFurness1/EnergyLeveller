@@ -9,7 +9,7 @@ font size       = 10
 
 #   Now begins the states input
 
-#---------  Path 1-----------
+#-------  Path 1 ----------
 
 #   Add the first path, all paths are relative to the reactant energies so
 #   start at zero
@@ -22,15 +22,12 @@ font size       = 10
     labelColour = black
     linksto     = pre-react1:red, transition2:#003399, pre-react3:#009933
     column      = 1
-    image       = ch3o.png
-    imageOffset = 0,2.5
-    imageScale  = 1
 }
 
 {
     name        = pre-react1
     text-colour = red
-    label       = CH$_3$O$\cdot$ $\cdots$ X
+    label       = CH$_3$O$\cdot$ $\ldots$ X
     energy      = -10.5
     labelColour = red
     linksto     = transition1:red
@@ -40,7 +37,7 @@ font size       = 10
 {
     name        = transition1
     text-colour = red
-    label       = [CH$_3$O$\cdot$ $\cdots$ X]$^{++}$
+    label       = [CH$_3$O$\cdot$ $\ldots$ X]$^{++}$
     energy      =    +20.1
     labelColour = red
     linksto     = post-react1:red
@@ -50,7 +47,7 @@ font size       = 10
 {
     name        = post-react1
     text-colour = red
-    label       = $\cdot$CH$_2$OH $\cdots$ X
+    label       = $\cdot$CH$_2$OH $\ldots$ X
     energy      = -8.2
     labelColour = red
     linksto     = products:red
@@ -68,7 +65,7 @@ font size       = 10
     labelColour = black
     column      = 5
 }
-#----------  Path 2 ----------------
+#--------  Path 2 -------------
 {
     name        = transition2
     text-colour = #003399
@@ -80,11 +77,11 @@ font size       = 10
     legend      = Uncatalysed
 }
 
-#-------  Path 3 ----------------
+#-------  Path 3 -----------
 {
     name        = pre-react3
     text-colour = #009933
-    label       =    CH$_3$O$\cdot$ $\cdots$ X
+    label       =    CH$_3$O$\cdot$ $\ldots$ X
     energy      = -8.3
     labelColour = #009933
     linksto     = transition3:#009933
@@ -97,7 +94,7 @@ font size       = 10
 {
     name        = transition3
     text-colour = #009933
-    label       = [CH$_3$O$\cdot$ $\cdots$ X]$^{++}$
+    label       = [CH$_3$O$\cdot$ $\ldots$ X]$^{++}$
     energy      = +25.4
     labelColour = #009933
     linksto     = post-react3:#009933
@@ -107,7 +104,7 @@ font size       = 10
 {
     name        = post-react3
     text-colour = #009933
-    label       = $\cdot$CH$_2$OH $\cdots$ X
+    label       = $\cdot$CH$_2$OH $\ldots$ X
     energy      = -6.1
     labelColour = #009933
     linksto     = products:#009933
