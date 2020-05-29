@@ -1,7 +1,5 @@
 A small python script for creating to-scale reaction profile diagrams in PDF form, shared under the <a href="https://choosealicense.com/licenses/mit/">MIT license</a>.
 
-<hr>
-
 <h3>About</h3>
 This tool was born when we got sick of seeing yet another MS Paint constructed monstrosity from the students in physical chemistry labs. We don't blame them, they were making the best of the tools they knew, but we wanted to encourage publication quality in the students reports, and helping them out with a tool to make better diagrams seemed only fair. The script has since found used in a few of my own projects that needed accurate energy profile diagrams, even ending up in <a href="Publications/Furness2015.pdf" target="_blank" rel="noopener noreferrer">published work</a>. As I wrote the script with inexperienced users in mind it tries to be as tolerant to input errors as possible, troopering on where possible, and advising where not.
 
@@ -221,8 +219,6 @@ font size       = 10
     textOffset  = 0,1.4
 }
 </pre>
-
-Running this input produces the diagram shown at the top of the page.
 
 <hr>
 
