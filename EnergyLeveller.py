@@ -156,10 +156,6 @@ class Diagram:
         if self.do_legend:
             self.ax.legend()
 
-        # imshow tries to change the axis aspect ratio.
-        # We don't want this, so change it back
-        self.ax.set_aspect(ax_aspect)
-
         self.fig.tight_layout()
         self.fig.savefig(self.outputName)
 

@@ -1,9 +1,9 @@
 A small python script for creating to-scale reaction profile diagrams in PDF form, shared under the <a href="https://choosealicense.com/licenses/mit/">MIT license</a>.
 
 <h3>About</h3>
-This tool was born when we got sick of seeing yet another MS Paint constructed monstrosity from the students in physical chemistry labs. We don't blame them, they were making the best of the tools they knew, but we wanted to encourage publication quality in the students reports, and helping them out with a tool to make better diagrams seemed only fair. The script has since found used in a few of my own projects that needed accurate energy profile diagrams, even ending up in <a href="Publications/Furness2015.pdf" target="_blank" rel="noopener noreferrer">published work</a>. As I wrote the script with inexperienced users in mind it tries to be as tolerant to input errors as possible, troopering on where possible, and advising where not.
+This tool was born to help students in physical chemistry labs make publication quality figures for their lab reports. Before writing this I could not find a covenient way to plot accurate to-scale energy level diagrams, and this script aims to address this. The script has since found used in a few of my own projects that needed accurate energy profile diagrams, even ending up in <a href="https://dx.doi.org/10.1021/acs.jctc.5b00535">published work</a>. As I wrote the script with inexperienced users in mind it tries to be as tolerant to input errors as possible, troopering on where possible, and advising where not.
 
-The script is written in python, compatible with 2 and 3, and was recently updated to require only the matplotlib library.<span class="snote">As well as the os, sys and math standard modules.</span>. It uses the "Agg" matplotlib backend, so will happily operate on a headless machine over SSH.
+The script is written in python, compatible with 2 and 3, and was recently updated to require only the matplotlib library. It uses the "Agg" matplotlib backend, so will happily operate on a headless machine over SSH.
 
 <hr>
 
@@ -19,7 +19,7 @@ Running the script without an input file will print an example input file to the
 <h3>Input File Structure</h3>
 The simplest way to understand the input to modify the example given below, though a full description is given here for completeness.
 
-The input file is structured as a block of general parameters for the overall plot appearance followed by a series of states defined in curly brace separated blocks. A state is identified in the script by a unique name allowing the definition of lines showing reaction pathways between named states. Lines beginning with a hash symbol <code>#</code> are ignored by the script and can be used to add comments to input files.<span class="snote">Inline comments are not yet supported.</span>
+The input file is structured as a block of general parameters for the overall plot appearance followed by a series of states defined in curly brace separated blocks. A state is identified in the script by a unique name allowing the definition of lines showing reaction pathways between named states. Lines beginning with a hash symbol <code>#</code> are ignored by the script and can be used to add comments to input files.
 
 <br style="margin-top:2px;">
 <h4>General Input</h4>
