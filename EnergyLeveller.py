@@ -20,9 +20,14 @@ class Diagram:
     """
 
 
-    def __init__(self, width, height, fontSize, outputName):
+    def __init__(self, width, height, fontSize, outputName, y_lims):
         self.width = width
         self.height = height
+        self.y_lims = y_lims
+        if y_lims is not None:
+            self.sorted_y_lims = sorted(y_lims) # Used to simplify bounds checking
+        else:
+            self.sorted_y_lims = None
         self.outputName = outputName
 
         self.fig = plt.figure(figsize=(self.width, self.height))
@@ -48,21 +53,6 @@ class Diagram:
             print("ERROR: States must have unique names. State " + state.name + " is already in use!")
             raise ValueError("Non unique state names.")
 
-    def DetermineEnergyRange(self):
-        if len(self.statesList) == 0:
-            raise ValueError("No states in diagram.")
-        maxE = -10E20
-        minE = 10E20
-        for state in self.statesList.keys():
-            if state.energy > maxE:
-                maxE = state.energy
-            if state.energy < minE:
-                minE = state.energy
-        self.axesTop = maxE
-        self.axesMin = minE
-        self.axesOriginNormalised =  1+(minE / (maxE - minE))
-        return [minE, maxE]
-
     def MakeLeftRightPoints(self):
         columnWidth = 1
 
@@ -85,14 +75,21 @@ class Diagram:
         offset = offset[1]*0.01
         for key in self.statesList.keys():
             state = self.statesList[key]
-            self.ax.text(state.leftPointx + state.labelOffset[0], state.leftPointy + state.labelOffset[1] + offset,
-                state.label,
-                color=state.labelColor,
-                verticalalignment='bottom')
-            self.ax.text(state.leftPointx  + state.textOffset[0], state.leftPointy + state.textOffset[1] - offset,
-                "  " + str(state.energy),
-                color=state.labelColor,
-                verticalalignment='top')
+            y_point = state.leftPointy + state.labelOffset[1] + offset
+            if self.sorted_y_lims is None or (y_point >= self.sorted_y_lims[0] and y_point <= self.sorted_y_lims[1]):
+                self.ax.annotate(
+                    state.label,
+                    (state.leftPointx + state.labelOffset[0], y_point),
+                    color=state.labelColor,
+                    verticalalignment='bottom', annotation_clip=True)
+
+            y_point = state.leftPointy + state.textOffset[1] - offset
+            if self.sorted_y_lims is None or (y_point >= self.sorted_y_lims[0] and y_point <= self.sorted_y_lims[1]):
+                self.ax.annotate(
+                    "  " + str(state.energy),
+                    (state.leftPointx  + state.textOffset[0], y_point),
+                    color=state.labelColor,
+                    verticalalignment='top', annotation_clip=True)
 
         # Now xrange is set by other things, fit the images
         # This requires some conversion between data coordinates and axes coordinates
@@ -136,7 +133,7 @@ class Diagram:
 #   Draw the dashed lines connecting them
         for key in self.statesList.keys():
             state = self.statesList[key]
-            if (state.linksTo != ""):
+            if state.linksTo != "":
                 for link in state.linksTo.split(','):
                     link = link.strip()
                     raw = link.split(':')
@@ -152,6 +149,8 @@ class Diagram:
                         print("Name: " + dest + " is unknown.")
 
         self.ax.set_ylabel(str(self.energyUnits))
+        if self.y_lims is not None:
+            self.ax.set_ylim(self.y_lims)
         self.ax.set_xticks([])
         if self.do_legend:
             self.ax.legend()
@@ -198,6 +197,7 @@ def ReadInput(filename):
     fontSize = 8
     energyUnits = ""
     colorsToAdd = {}
+    y_lims = None
     lc = 0
     for line in inp:
         lc += 1
@@ -290,6 +290,9 @@ def ReadInput(filename):
                 print("WARNING: Not expecting closing } on line: " + str(lc))
 
             else:
+                """
+                READING GLOBAL OPTIONS
+                """
                 raw = line.split('=')
                 if (len(raw) != 2):
                     print("Ignoring unrecognised line " + str(lc) + ":\n\t"+line)
@@ -322,21 +325,28 @@ def ReadInput(filename):
                         except ValueError:
                             print("ERROR: Could not read integer for font size on line " + str(lc)+ ":\n\t"+line)
                             print("Default will be used...")
+                    elif "ENERGY" in raw[0] and "RANGE" in raw[0]:
+                        try:
+                            y_lims = [float(l) for l in raw[1].split(',')]
+                        except ValueError:
+                            print("ERROR: Could not read floats for energy range on line " + str(lc)+ ":\n\t"+line)
+                            print("e.g: ENERGY RANGE = -1, 2")
+                            print("Automatic range will be used...")
                     else:
                         print("WARNING: Skipping unknown line " + str(lc) + ":\n\t" + line)
-    if (stateBlock):
+    if stateBlock:
         print("WARNING: Final closing '}' is missing.")
-    if (height == 0):
+    if height == 0:
         print("ERROR: Image height not set! e.g.:\nheight = 500")
         raise ValueError("Height not set")
-    if (width == 0):
+    if width == 0:
         print("ERROR: Image width not set! e.g.:\nwidth = 500")
         raise ValueError("Width not set")
-    if (outName == ""):
+    if outName == "":
         print("ERROR: output file name not set! e.g.:\n output-file = example.pdf")
         raise ValueError("Output name not set")
 
-    outDiagram = Diagram(width, height, fontSize, outName)
+    outDiagram = Diagram(width, height, fontSize, outName, y_lims)
     outDiagram.energyUnits = energyUnits
     for color in colorsToAdd:
         outDiagram.COLORS[color] = colorsToAdd[color]
@@ -358,9 +368,10 @@ def MakeExampleFile():
     output = open("example.inp", 'w')
 
     output.write("output-file     = example.pdf"
-        "\nwidth           = 8\n"
-        "height          = 8\n"
-        "energy-units    = $\\Delta$E  kJ/mol"
+        "\nwidth           = 8"
+        "\nheight          = 8"
+        "\nenergy-units    = $\\Delta$E  kJ/mol"
+        "\nenergy range      = -15,35"
         "\nfont size       = 10"
         "\n\n#   This is a comment. Lines that begin with a # are ignored."
         "\n#   Available colours are those accepted by matplotlib "
