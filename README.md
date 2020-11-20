@@ -46,6 +46,10 @@ The following common options control the overall output and are entered as <code
 <td><code>energy-units</code></td>
 <td>Unit label for the vertical scale.</td>
 </tr>
+<tr>
+<td><code>energy range</code></td>
+<td>Sets the range of the Y axis. Expects comma upper and lower energy bounds.</td>
+</tr>
 </tbody>
 </table>
 The code will accept any <a href="https://matplotlib.org/api/colors_api.html">matplotlib compatible colour definition.</a>
@@ -108,6 +112,7 @@ output-file     = example.pdf
 width           = 8
 height          = 8
 energy-units    = $\Delta$E  kJ/mol
+energy range    = -15,35
 font size       = 10
 
 #   This is a comment. Lines that begin with a # are ignored.
