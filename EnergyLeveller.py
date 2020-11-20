@@ -328,6 +328,7 @@ def ReadInput(filename):
                     elif "ENERGY" in raw[0] and "RANGE" in raw[0]:
                         try:
                             y_lims = [float(l) for l in raw[1].split(',')]
+                            assert len(y_lims) == 2, "Must have two comma separated numbers for range."
                         except ValueError:
                             print("ERROR: Could not read floats for energy range on line " + str(lc)+ ":\n\t"+line)
                             print("e.g: ENERGY RANGE = -1, 2")
