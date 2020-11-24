@@ -93,6 +93,10 @@ Points in the diagram are defined as individual states with various properties d
 <td><code>links-to</code></td>
 <td>Links this state to others in the diagram, discussed in detail below.</td>
 </tr>
+<tr>
+<td><code>hide energy</code></td>
+<td>Flags that we should not print a label showing the energy of the state.</td>
+</tr>
 </tbody>
 </table>
 States can be linked together to show reaction pathways using the state option <code>links-to</code> with a comma delimited list of named states to connect to. A dashed line is drawn from the right edge of the current state to the left edge of the listed state. A colour for this line can be specified using <code>:colour</code> after the destination state name. User defined colours can be used. For example:
