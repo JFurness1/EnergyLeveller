@@ -38,12 +38,11 @@ class Diagram:
         self.columns     = 0
         self.energyUnits = ""
         self.do_legend   = False
-        self.COLORS      = {}
 
     def AddState(self, state):
         state.name = state.name.upper()
-        state.color = state.color.upper()
-        state.labelColor = state.labelColor.upper()
+        state.color = state.color
+        state.labelColor = state.labelColor
         state.linksTo = state.linksTo.upper()
         if state.legend is not None:
             self.do_legend = True
@@ -84,7 +83,7 @@ class Diagram:
                     verticalalignment='bottom', annotation_clip=True)
 
             y_point = state.leftPointy + state.textOffset[1] - offset
-            if self.sorted_y_lims is None or (y_point >= self.sorted_y_lims[0] and y_point <= self.sorted_y_lims[1]):
+            if state.show_energy and (self.sorted_y_lims is None or (y_point >= self.sorted_y_lims[0] and y_point <= self.sorted_y_lims[1])):
                 self.ax.annotate(
                     "  " + str(state.energy),
                     (state.leftPointx  + state.textOffset[0], y_point),
@@ -161,8 +160,8 @@ class Diagram:
 class State:
     def __init__(self):
         self.name        = ""
-        self.color       = ""
-        self.labelColor  = ""
+        self.color       = "k"
+        self.labelColor  = "k"
         self.linksTo     = ""
         self.label       = ""
         self.legend      = None
@@ -178,6 +177,7 @@ class State:
         self.imageOffset = (0,0)
         self.imageScale = 1.0
         self.image = None
+        self.show_energy = True
 
 ######################################################################################################
 #           Input reading block
@@ -196,7 +196,6 @@ def ReadInput(filename):
     height = 0
     fontSize = 8
     energyUnits = ""
-    colorsToAdd = {}
     y_lims = None
     lc = 0
     for line in inp:
@@ -211,77 +210,81 @@ def ReadInput(filename):
                     stateBlock = False
                 else:
                     raw = line.split('=')
-                    if (len(raw) != 2 and raw[0].upper().strip() != "LABEL"):
-                        print(raw[0].strip())
-                        print("Ignoring unrecognised line " + str(lc) + ":\n\t"+line)
-                    else:
-                        raw[0] = raw[0].upper().strip()
+
+                    raw[0] = raw[0].upper().strip()
+                    
+                    try:
                         raw[1] = raw[1].strip()
-                        if (raw[0] == "NAME"):
-                            statesList[-1].name = raw[1].upper()
-                        elif (raw[0] == "TEXTCOLOR" or raw[0] == "TEXTCOLOUR" or raw[0] == "TEXT-COLOUR" or raw[0] == "TEXT-COLOR" or raw[0] == "TEXT COLOUR" or raw[0] == "TEXT COLOR"):
-                            statesList[-1].color = raw[1].upper()
-                        elif (raw[0] == "LABEL"):
-                            statesList[-1].label = ""
-                            for i in range(1, len(raw)):
-                                statesList[-1].label += raw[i]
-                                if i < len(raw)-1:
-                                    statesList[-1].label += " = "
-                        elif (raw[0] == "LABELCOLOR" or raw[0] == "LABELCOLOUR"):
-                            statesList[-1].labelColor = raw[1]
-                        elif (raw[0] == "LINKSTO" or raw[0] == "LINKS TO"):
-                            statesList[-1].linksTo = raw[1].upper()
-                        elif (raw[0] == "COLUMN"):
-                            try:
-                                statesList[-1].column = int(raw[1])-1
-                            except ValueError:
-                                print("ERROR: Could not read integer for column number on line " + str(lc)+ ":\n\t"+line)
-                        elif (raw[0] == "ENERGY"):
-                            try:
-                                statesList[-1].energy = float(raw[-1])
-                            except ValueError:
-                                print("ERROR: Could not read real number for energy on line " + str(lc)+ ":\n\t"+line)
-                        elif (raw[0] == "LABELOFFSET" or raw[0] == "LABEL OFFSET" or raw[0] == "LABEL-OFFSET"):
-                            raw[1] = raw[1].split(',')
-                            try:
-                                tx = float(raw[1][0])
-                                ty = float(raw[1][1])
-                                statesList[-1].labelOffset = (tx, ty)
-                            except ValueError:
-                                print("ERROR: Could not read real number for label offset on line " + str(lc)+ ":\n\t"+line)
-                        elif (raw[0] == "TEXTOFFSET" or raw[0] == "TEXT OFFSET" or raw[0] == "TEXT-OFFSET"):
-                            raw[1] = raw[1].split(',')
-                            try:
-                                tx = float(raw[1][0])
-                                ty = float(raw[1][1])
-                                statesList[-1].textOffset = (tx, ty)
-                            except ValueError:
-                                print("ERROR: Could not read real number for text offset on line " + str(lc)+ ":\n\t"+line)
-                        elif raw[0] == "LEGEND":
-                            statesList[-1].legend = raw[1]
-                        elif raw[0] == "IMAGE":
-                            try:
-                                statesList[-1].image = plt.imread(raw[-1])
-                            except IOError:
-                                raise IOError("Failed to find image on line {:}".format(lc))
-                        elif "IMAGE" in raw[0] and "OFFSET" in raw[0]:
-                            raw[1] = raw[1].split(',')
-                            try:
-                                tx = float(raw[1][0])
-                                ty = float(raw[1][1])
-                                statesList[-1].imageOffset = (tx, ty)
-                            except ValueError:
-                                print("ERROR: Could not read real number for image offset on line " + str(lc)+ ":\n\t"+line)
-                        elif "IMAGE" in raw[0] and "SCALE" in raw[0]:
-                            try:
-                                scale = float(raw[1])
-                                if scale < 0.1:
-                                    print("image scale cannot be < 0.1, setting to 0.1/")
-                                statesList[-1].imageScale = max(scale, 0.1)
-                            except ValueError:
-                                print("ERROR: Could not read real number for image scale on line " + str(lc)+ ":\n\t"+line)
-                        else:
-                            print("Ignoring unrecognised line " + str(lc) + ":\n\t"+line)
+                    except IndexError:
+                        pass
+
+                    if (raw[0] == "NAME"):
+                        statesList[-1].name = raw[1].upper()
+                    elif (raw[0] == "TEXTCOLOR" or raw[0] == "TEXTCOLOUR" or raw[0] == "TEXT-COLOUR" or raw[0] == "TEXT-COLOR" or raw[0] == "TEXT COLOUR" or raw[0] == "TEXT COLOR"):
+                        statesList[-1].color = raw[1]
+                    elif (raw[0] == "LABEL"):
+                        statesList[-1].label = ""
+                        for i in range(1, len(raw)):
+                            statesList[-1].label += raw[i]
+                            if i < len(raw)-1:
+                                statesList[-1].label += " = "
+                    elif (raw[0] == "LABELCOLOR" or raw[0] == "LABELCOLOUR"):
+                        statesList[-1].labelColor = raw[1]
+                    elif (raw[0] == "LINKSTO" or raw[0] == "LINKS TO"):
+                        statesList[-1].linksTo = raw[1].upper()
+                    elif (raw[0] == "COLUMN"):
+                        try:
+                            statesList[-1].column = int(raw[1])-1
+                        except ValueError:
+                            print("ERROR: Could not read integer for column number on line " + str(lc)+ ":\n\t"+line)
+                    elif (raw[0] == "ENERGY"):
+                        try:
+                            statesList[-1].energy = float(raw[-1])
+                        except ValueError:
+                            print("ERROR: Could not read real number for energy on line " + str(lc)+ ":\n\t"+line)
+                    elif (raw[0] == "LABELOFFSET" or raw[0] == "LABEL OFFSET" or raw[0] == "LABEL-OFFSET"):
+                        raw[1] = raw[1].split(',')
+                        try:
+                            tx = float(raw[1][0])
+                            ty = float(raw[1][1])
+                            statesList[-1].labelOffset = (tx, ty)
+                        except ValueError:
+                            print("ERROR: Could not read real number for label offset on line " + str(lc)+ ":\n\t"+line)
+                    elif (raw[0] == "TEXTOFFSET" or raw[0] == "TEXT OFFSET" or raw[0] == "TEXT-OFFSET"):
+                        raw[1] = raw[1].split(',')
+                        try:
+                            tx = float(raw[1][0])
+                            ty = float(raw[1][1])
+                            statesList[-1].textOffset = (tx, ty)
+                        except ValueError:
+                            print("ERROR: Could not read real number for text offset on line " + str(lc)+ ":\n\t"+line)
+                    elif raw[0] == "LEGEND":
+                        statesList[-1].legend = raw[1]
+                    elif raw[0] == "IMAGE":
+                        try:
+                            statesList[-1].image = plt.imread(raw[-1])
+                        except IOError:
+                            raise IOError("Failed to find image on line {:}".format(lc))
+                    elif "IMAGE" in raw[0] and "OFFSET" in raw[0]:
+                        raw[1] = raw[1].split(',')
+                        try:
+                            tx = float(raw[1][0])
+                            ty = float(raw[1][1])
+                            statesList[-1].imageOffset = (tx, ty)
+                        except ValueError:
+                            print("ERROR: Could not read real number for image offset on line " + str(lc)+ ":\n\t"+line)
+                    elif "IMAGE" in raw[0] and "SCALE" in raw[0]:
+                        try:
+                            scale = float(raw[1])
+                            if scale < 0.1:
+                                print("image scale cannot be < 0.1, setting to 0.1/")
+                            statesList[-1].imageScale = max(scale, 0.1)
+                        except ValueError:
+                            print("ERROR: Could not read real number for image scale on line " + str(lc)+ ":\n\t"+line)
+                    elif "HIDE" in raw[0] and "ENERGY" in raw[0]:
+                        statesList[-1].show_energy = False
+                    else:
+                        print("Ignoring unrecognised line " + str(lc) + ":\n\t"+line)
             elif (line.strip()[0] == "{"):
                 statesList.append(State())
                 stateBlock = True   # we have entered a state block
@@ -349,8 +352,6 @@ def ReadInput(filename):
 
     outDiagram = Diagram(width, height, fontSize, outName, y_lims)
     outDiagram.energyUnits = energyUnits
-    for color in colorsToAdd:
-        outDiagram.COLORS[color] = colorsToAdd[color]
     maxColumn = 0
     for state in statesList:
         outDiagram.AddState(state)
